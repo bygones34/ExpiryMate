@@ -61,9 +61,13 @@ import com.alperdursun.expirymate.util.DateUtils
 fun ItemsScreen(
     modifier: Modifier = Modifier,
     viewModel: ItemsViewModel = viewModel(
-        factory = ItemsViewModel.Factory(
-            (LocalContext.current.applicationContext as ExpiryMateApplication).container.itemRepository
-        )
+        factory = run {
+            val appContainer = (LocalContext.current.applicationContext as ExpiryMateApplication).container
+            ItemsViewModel.Factory(
+                repository = appContainer.itemRepository,
+                reminderScheduler = appContainer.reminderScheduler,
+            )
+        }
     )
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()

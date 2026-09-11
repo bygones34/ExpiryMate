@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import com.alperdursun.expirymate.data.reminder.ReminderScheduler
 import com.alperdursun.expirymate.data.repository.ItemRepository
 import com.alperdursun.expirymate.domain.model.Item
 import com.alperdursun.expirymate.domain.model.ItemCategory
@@ -19,11 +20,12 @@ data class ItemsUiState(
     val selectedCategory: ItemCategory? = null,
     val searchQuery: String = "",
     val items: List<Item> = emptyList(),
-    val totalActiveCount: Int = 0
+    val totalActiveCount: Int = 0,
 )
 
 class ItemsViewModel(
-    private val itemRepository: ItemRepository
+    private val itemRepository: ItemRepository,
+    private val reminderScheduler: ReminderScheduler,
 ) : ViewModel() {
 
     private val selectedCategory = MutableStateFlow<ItemCategory?>(null)
@@ -66,19 +68,24 @@ class ItemsViewModel(
     fun markAsUsed(itemId: Long) {
         viewModelScope.launch {
             itemRepository.markAsUsed(itemId)
+            reminderScheduler.cancelReminder(itemId)
         }
     }
 
     fun markAsDiscarded(itemId: Long) {
         viewModelScope.launch {
             itemRepository.markAsDiscarded(itemId)
+            reminderScheduler.cancelReminder(itemId)
         }
     }
 
     companion object {
-        fun Factory(repository: ItemRepository): ViewModelProvider.Factory = viewModelFactory {
+        fun Factory(
+            repository: ItemRepository,
+            reminderScheduler: ReminderScheduler
+        ): ViewModelProvider.Factory = viewModelFactory {
             initializer {
-                ItemsViewModel(repository)
+                ItemsViewModel(repository, reminderScheduler)
             }
         }
     }

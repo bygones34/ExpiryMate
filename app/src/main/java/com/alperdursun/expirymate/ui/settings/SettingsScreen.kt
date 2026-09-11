@@ -1,5 +1,6 @@
 package com.alperdursun.expirymate.ui.settings
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -20,13 +21,16 @@ import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Palette
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -35,15 +39,39 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.alperdursun.expirymate.ExpiryMateApplication
+
+private val reminderOptions = listOf(
+    0 to "Same day",
+    1 to "1 day before",
+    3 to "3 days before",
+    7 to "7 days before",
+)
 
 @Composable
 fun SettingsScreen(
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    viewModel: SettingsViewModel = viewModel(
+        factory = run {
+            val appContainer = (LocalContext.current.applicationContext as ExpiryMateApplication).container
+            SettingsViewModel.Factory(
+                settingsRepository = appContainer.settingsRepository,
+                itemRepository = appContainer.itemRepository,
+                reminderScheduler = appContainer.reminderScheduler,
+            )
+        }
+    )
 ) {
-    var notificationsEnabled by remember { mutableStateOf(true) }
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var darkThemeEnabled by remember { mutableStateOf(false) }
+    var showDefaultDaysDialog by remember { mutableStateOf(false) }
+
+    val defaultReminderText = reminderOptions.find { it.first == uiState.defaultReminderDays }?.second ?: "1 day before"
 
     Column(
         modifier = modifier
@@ -66,13 +94,14 @@ fun SettingsScreen(
                 icon = Icons.Default.Notifications,
                 title = "Expiration Reminders",
                 subtitle = "Receive notifications before products expire",
-                checked = notificationsEnabled,
-                onCheckedChange = { notificationsEnabled = it }
+                checked = uiState.isRemindersEnabled,
+                onCheckedChange = viewModel::onRemindersEnabledToggled
             )
             SettingsClickableRow(
                 icon = Icons.Default.Notifications,
                 title = "Default Reminder Timing",
-                value = "1 day before"
+                value = defaultReminderText,
+                onClick = { showDefaultDaysDialog = true }
             )
         }
 
@@ -120,7 +149,7 @@ fun SettingsScreen(
             SettingsClickableRow(
                 icon = Icons.Default.Info,
                 title = "Version",
-                value = "1.0.0 (Milestone 1)"
+                value = "1.0.0 (Milestone 3)"
             )
             Surface(
                 modifier = Modifier
@@ -149,6 +178,45 @@ fun SettingsScreen(
         }
 
         Spacer(modifier = Modifier.height(16.dp))
+    }
+
+    // Default Reminder Days Selection Dialog
+    if (showDefaultDaysDialog) {
+        AlertDialog(
+            onDismissRequest = { showDefaultDaysDialog = false },
+            title = { Text("Default Reminder Timing") },
+            text = {
+                Column {
+                    reminderOptions.forEach { (days, label) ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    viewModel.onDefaultReminderDaysSelected(days)
+                                    showDefaultDaysDialog = false
+                                }
+                                .padding(vertical = 10.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            RadioButton(
+                                selected = days == uiState.defaultReminderDays,
+                                onClick = {
+                                    viewModel.onDefaultReminderDaysSelected(days)
+                                    showDefaultDaysDialog = false
+                                }
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(text = label, style = MaterialTheme.typography.bodyMedium)
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showDefaultDaysDialog = false }) {
+                    Text("Close")
+                }
+            }
+        )
     }
 }
 
@@ -229,11 +297,13 @@ private fun SettingsSwitchRow(
 private fun SettingsClickableRow(
     icon: ImageVector,
     title: String,
-    value: String
+    value: String,
+    onClick: () -> Unit = {}
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .clickable { onClick() }
             .padding(horizontal = 16.dp, vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {

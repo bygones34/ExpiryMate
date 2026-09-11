@@ -1,5 +1,10 @@
 package com.alperdursun.expirymate.ui.additem
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -52,12 +57,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.alperdursun.expirymate.ExpiryMateApplication
+import com.alperdursun.expirymate.domain.model.Item
 import com.alperdursun.expirymate.domain.model.ItemCategory
 import com.alperdursun.expirymate.util.DateUtils
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.first
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
@@ -75,17 +83,52 @@ fun AddItemScreen(
     onNavigateBack: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: AddItemViewModel = viewModel(
-        factory = AddItemViewModel.Factory(
-            (LocalContext.current.applicationContext as ExpiryMateApplication).container.itemRepository,
-        )
+        factory = run {
+            val appContainer = (LocalContext.current.applicationContext as ExpiryMateApplication).container
+            AddItemViewModel.Factory(
+                repository = appContainer.itemRepository,
+                settingsRepository = appContainer.settingsRepository,
+            )
+        }
     )
 ) {
+    val context = LocalContext.current
+    val appContainer = remember { (context.applicationContext as ExpiryMateApplication).container }
     val formState by viewModel.formState.collectAsStateWithLifecycle()
     var showDatePickerDialog by remember { mutableStateOf(value = false) }
 
-    LaunchedEffect(Unit) {
-        viewModel.saveSuccessEvent.collectLatest {
+    var pendingSavedItem by remember { mutableStateOf<Item?>(null) }
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission(),
+        onResult = { isGranted ->
+            val itemToSchedule = pendingSavedItem
+            pendingSavedItem = null
+            if (isGranted && (itemToSchedule != null)) {
+                appContainer.reminderScheduler.scheduleReminder(itemToSchedule)
+            }
             onNavigateBack()
+        }
+    )
+
+    LaunchedEffect(Unit) {
+        viewModel.saveSuccessEvent.collectLatest { savedItem ->
+            val isRemindersEnabled = appContainer.settingsRepository.isRemindersEnabled.first()
+            if (!isRemindersEnabled) {
+                onNavigateBack()
+            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                val permission = ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS)
+                if (permission == PackageManager.PERMISSION_GRANTED) {
+                    appContainer.reminderScheduler.scheduleReminder(savedItem)
+                    onNavigateBack()
+                } else {
+                    pendingSavedItem = savedItem
+                    permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                }
+            } else {
+                appContainer.reminderScheduler.scheduleReminder(savedItem)
+                onNavigateBack()
+            }
         }
     }
 

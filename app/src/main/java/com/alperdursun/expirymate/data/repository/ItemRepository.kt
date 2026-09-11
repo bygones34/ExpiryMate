@@ -11,6 +11,8 @@ class ItemRepository(private val itemDao: ItemDao) {
 
     fun observeHistoryItems(): Flow<List<Item>> = itemDao.observeHistoryItems()
 
+    suspend fun getItemById(itemId: Long): Item? = itemDao.getItemById(itemId)
+
     suspend fun addItem(item: Item): Long = itemDao.insertItem(item)
 
     suspend fun markAsUsed(itemId: Long) {

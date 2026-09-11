@@ -1,7 +1,8 @@
-package com.alperdursun.expirymate.ui.additem
+package com.alperdursun.expirymate.ui.settings
 
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import com.alperdursun.expirymate.data.local.ItemDao
+import com.alperdursun.expirymate.data.reminder.ReminderScheduler
 import com.alperdursun.expirymate.data.repository.ItemRepository
 import com.alperdursun.expirymate.data.repository.SettingsRepository
 import com.alperdursun.expirymate.domain.model.Item
@@ -19,16 +20,13 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotNull
-import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
-import java.time.LocalDate
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class AddItemViewModelTest {
+class SettingsViewModelTest {
 
     @get:Rule
     val tmpFolder: TemporaryFolder = TemporaryFolder.builder().assureDeletion().build()
@@ -55,7 +53,7 @@ class AddItemViewModelTest {
     }
 
     @Test
-    fun testValidationFailsWhenNameOrDateMissing() {
+    fun testTogglingRemindersAndDefaultTiming() = runTest {
         val fakeDao = object : ItemDao {
             override fun observeActiveItems(): Flow<List<Item>> = flowOf(emptyList())
             override fun observeHistoryItems(): Flow<List<Item>> = flowOf(emptyList())
@@ -66,52 +64,46 @@ class AddItemViewModelTest {
             override suspend fun deleteItem(id: Long) {}
         }
 
-        val repository = ItemRepository(fakeDao)
-        val settingsRepository = createSettingsRepository()
-        val viewModel = AddItemViewModel(repository, settingsRepository)
+        var cancelAllCalled = false
+        var rescheduleCalled = false
 
-        viewModel.saveItem()
-
-        val state = viewModel.formState.value
-        assertNotNull(state.nameError)
-        assertNotNull(state.dateError)
-    }
-
-    @Test
-    fun testSaveSuccessEmitsEventOnce() = runTest {
-        val fakeDao = object : ItemDao {
-            override fun observeActiveItems(): Flow<List<Item>> = flowOf(emptyList())
-            override fun observeHistoryItems(): Flow<List<Item>> = flowOf(emptyList())
-            override suspend fun getItemById(id: Long): Item? = null
-            override suspend fun insertItem(item: Item): Long = 42L
-            override suspend fun updateItem(item: Item) {}
-            override suspend fun updateItemStatus(id: Long, status: ItemStatus, completedAtTimestamp: Long?) {}
-            override suspend fun deleteItem(id: Long) {}
+        val fakeScheduler = object : ReminderScheduler(null) {
+            override fun scheduleReminder(item: Item) {}
+            override fun cancelReminder(itemId: Long) {}
+            override fun cancelAllReminders() { cancelAllCalled = true }
+            override fun rescheduleAllActiveReminders(activeItems: List<Item>) { rescheduleCalled = true }
         }
 
         val repository = ItemRepository(fakeDao)
         val settingsRepository = createSettingsRepository()
-        val viewModel = AddItemViewModel(repository, settingsRepository)
+        val viewModel = SettingsViewModel(settingsRepository, repository, fakeScheduler)
 
-        var savedItemResult: Item? = null
+        var latestState: SettingsUiState? = null
         val collectJob = launch(UnconfinedTestDispatcher(testScheduler)) {
-            viewModel.saveSuccessEvent.collect { item ->
-                savedItemResult = item
+            viewModel.uiState.collect {
+                latestState = it
             }
         }
 
-        viewModel.onNameChanged("Fresh Milk")
-        viewModel.onDateSelected(LocalDate.now().plusDays(5))
+        assertEquals(true, latestState?.isRemindersEnabled)
+        assertEquals(1, latestState?.defaultReminderDays)
 
-        viewModel.saveItem()
+        viewModel.onRemindersEnabledToggled(false)
         testScheduler.advanceUntilIdle()
 
-        val state = viewModel.formState.value
-        assertNull(state.nameError)
-        assertNull(state.dateError)
-        assertNotNull(savedItemResult)
-        assertEquals(42L, savedItemResult?.id)
-        assertEquals("Fresh Milk", savedItemResult?.name)
+        assertEquals(false, latestState?.isRemindersEnabled)
+        assertEquals(true, cancelAllCalled)
+
+        viewModel.onRemindersEnabledToggled(true)
+        testScheduler.advanceUntilIdle()
+
+        assertEquals(true, latestState?.isRemindersEnabled)
+        assertEquals(true, rescheduleCalled)
+
+        viewModel.onDefaultReminderDaysSelected(3)
+        testScheduler.advanceUntilIdle()
+
+        assertEquals(3, latestState?.defaultReminderDays)
 
         collectJob.cancel()
     }

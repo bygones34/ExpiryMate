@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.alperdursun.expirymate.data.repository.ItemRepository
+import com.alperdursun.expirymate.data.repository.SettingsRepository
 import com.alperdursun.expirymate.domain.model.Item
 import com.alperdursun.expirymate.domain.model.ItemCategory
 import com.alperdursun.expirymate.domain.model.ItemStatus
@@ -14,6 +15,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -31,14 +33,22 @@ data class AddItemFormState(
 )
 
 class AddItemViewModel(
-    private val itemRepository: ItemRepository
+    private val itemRepository: ItemRepository,
+    private val settingsRepository: SettingsRepository,
 ) : ViewModel() {
 
     private val _formState = MutableStateFlow(AddItemFormState())
     val formState: StateFlow<AddItemFormState> = _formState.asStateFlow()
 
-    private val _saveSuccessEvent = Channel<Unit>(Channel.BUFFERED)
-    val saveSuccessEvent: Flow<Unit> = _saveSuccessEvent.receiveAsFlow()
+    private val _saveSuccessEvent = Channel<Item>(Channel.BUFFERED)
+    val saveSuccessEvent: Flow<Item> = _saveSuccessEvent.receiveAsFlow()
+
+    init {
+        viewModelScope.launch {
+            val defaultDays = settingsRepository.defaultReminderDays.first()
+            _formState.update { it.copy(reminderDaysBefore = defaultDays) }
+        }
+    }
 
     fun onNameChanged(name: String) {
         _formState.update {
@@ -106,8 +116,10 @@ class AddItemViewModel(
                     notes = currentState.notes.trim().ifEmpty { null },
                     status = ItemStatus.ACTIVE
                 )
-                itemRepository.addItem(newItem)
-                _saveSuccessEvent.send(Unit)
+                val generatedId = itemRepository.addItem(newItem)
+                val savedItem = newItem.copy(id = generatedId)
+
+                _saveSuccessEvent.send(savedItem)
             } catch (_: Exception) {
                 _formState.update { it.copy(nameError = "Failed to save item. Please try again.") }
             } finally {
@@ -117,9 +129,12 @@ class AddItemViewModel(
     }
 
     companion object {
-        fun Factory(repository: ItemRepository): ViewModelProvider.Factory = viewModelFactory {
+        fun Factory(
+            repository: ItemRepository,
+            settingsRepository: SettingsRepository,
+        ): ViewModelProvider.Factory = viewModelFactory {
             initializer {
-                AddItemViewModel(repository)
+                AddItemViewModel(repository, settingsRepository)
             }
         }
     }
