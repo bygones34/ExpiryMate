@@ -19,12 +19,17 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Inventory2
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
@@ -42,44 +47,26 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-
-// Placeholder data structure for UI visualization
-private data class ItemPlaceholder(
-    val name: String,
-    val category: String,
-    val location: String,
-    val expirationDate: String,
-    val isUrgent: Boolean = false
-)
-
-private val categories = listOf(
-    "All",
-    "Food",
-    "Medicine",
-    "Cosmetics",
-    "Supplements",
-    "Household",
-    "Other"
-)
-
-private val sampleItems = listOf(
-    ItemPlaceholder("Fresh Organic Milk", "Food", "Fridge", "Jan 15, 2026", isUrgent = true),
-    ItemPlaceholder("Greek Yogurt 500g", "Food", "Fridge", "Jan 17, 2026"),
-    ItemPlaceholder("Vitamin C 1000mg", "Supplements", "Pantry", "Jan 19, 2026"),
-    ItemPlaceholder("Pain Relief Gel", "Medicine", "Medicine Cabinet", "Jan 25, 2026"),
-    ItemPlaceholder("Moisturizing Face Cream", "Cosmetics", "Bathroom", "Feb 10, 2026"),
-    ItemPlaceholder("Dishwasher Pods", "Household", "Kitchen Sink", "Mar 01, 2026")
-)
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.alperdursun.expirymate.ExpiryMateApplication
+import com.alperdursun.expirymate.domain.model.Item
+import com.alperdursun.expirymate.domain.model.ItemCategory
+import com.alperdursun.expirymate.util.DateUtils
 
 @Composable
 fun ItemsScreen(
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    viewModel: ItemsViewModel = viewModel(
+        factory = ItemsViewModel.Factory(
+            (LocalContext.current.applicationContext as ExpiryMateApplication).container.itemRepository
+        )
+    )
 ) {
-    var searchQuery by remember { mutableStateOf("") }
-    var selectedCategory by remember { mutableStateOf("All") }
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     Column(
         modifier = modifier
@@ -105,7 +92,7 @@ fun ItemsScreen(
                 color = MaterialTheme.colorScheme.primaryContainer
             ) {
                 Text(
-                    text = "${sampleItems.size} items",
+                    text = "${uiState.totalActiveCount} items",
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onPrimaryContainer,
@@ -116,12 +103,12 @@ fun ItemsScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Search Bar Placeholder
+        // Search Bar
         OutlinedTextField(
-            value = searchQuery,
-            onValueChange = { searchQuery = it },
+            value = uiState.searchQuery,
+            onValueChange = viewModel::onSearchQueryChanged,
             modifier = Modifier.fillMaxWidth(),
-            placeholder = { Text("Search by name, category, or location...") },
+            placeholder = { Text("Search by name or category...") },
             leadingIcon = {
                 Icon(
                     imageVector = Icons.Default.Search,
@@ -130,8 +117,8 @@ fun ItemsScreen(
                 )
             },
             trailingIcon = {
-                if (searchQuery.isNotEmpty()) {
-                    IconButton(onClick = { searchQuery = "" }) {
+                if (uiState.searchQuery.isNotEmpty()) {
+                    IconButton(onClick = { viewModel.onSearchQueryChanged("") }) {
                         Icon(
                             imageVector = Icons.Default.Clear,
                             contentDescription = "Clear search"
@@ -156,21 +143,31 @@ fun ItemsScreen(
                 .horizontalScroll(rememberScrollState()),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            categories.forEach { category ->
-                val isSelected = category == selectedCategory
+            val isAllSelected = uiState.selectedCategory == null
+            FilterChip(
+                selected = isAllSelected,
+                onClick = { viewModel.onCategorySelected(null) },
+                label = { Text("All") },
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Default.FilterList,
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp)
+                    )
+                },
+                colors = FilterChipDefaults.filterChipColors(
+                    selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                    selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer
+                ),
+                shape = RoundedCornerShape(12.dp)
+            )
+
+            ItemCategory.entries.forEach { category ->
+                val isSelected = uiState.selectedCategory == category
                 FilterChip(
                     selected = isSelected,
-                    onClick = { selectedCategory = category },
-                    label = { Text(category) },
-                    leadingIcon = if (category == "All") {
-                        {
-                            Icon(
-                                imageVector = Icons.Default.FilterList,
-                                contentDescription = null,
-                                modifier = Modifier.size(16.dp)
-                            )
-                        }
-                    } else null,
+                    onClick = { viewModel.onCategorySelected(category) },
+                    label = { Text(category.displayName) },
                     colors = FilterChipDefaults.filterChipColors(
                         selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
                         selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer
@@ -183,15 +180,25 @@ fun ItemsScreen(
         Spacer(modifier = Modifier.height(12.dp))
 
         // Items List or Empty State
-        if (sampleItems.isEmpty()) {
-            EmptyItemsState(modifier = Modifier.weight(1f))
+        if (uiState.items.isEmpty()) {
+            EmptyItemsState(
+                isFiltered = uiState.selectedCategory != null || uiState.searchQuery.isNotEmpty(),
+                modifier = Modifier.weight(1f)
+            )
         } else {
             LazyColumn(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                items(sampleItems) { item ->
-                    ItemCard(item = item)
+                items(
+                    items = uiState.items,
+                    key = { it.id }
+                ) { item ->
+                    ItemCard(
+                        item = item,
+                        onMarkAsUsed = { viewModel.markAsUsed(item.id) },
+                        onMarkAsDiscarded = { viewModel.markAsDiscarded(item.id) }
+                    )
                 }
                 item {
                     Spacer(modifier = Modifier.height(16.dp))
@@ -203,8 +210,13 @@ fun ItemsScreen(
 
 @Composable
 private fun ItemCard(
-    item: ItemPlaceholder
+    item: Item,
+    onMarkAsUsed: () -> Unit,
+    onMarkAsDiscarded: () -> Unit
 ) {
+    var showMenu by remember { mutableStateOf(false) }
+    val isExpired = DateUtils.isExpired(item.expirationDate)
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
@@ -224,7 +236,7 @@ private fun ItemCard(
                     .size(42.dp)
                     .clip(RoundedCornerShape(12.dp))
                     .background(
-                        if (item.isUrgent) MaterialTheme.colorScheme.errorContainer
+                        if (isExpired) MaterialTheme.colorScheme.errorContainer
                         else MaterialTheme.colorScheme.primaryContainer
                     ),
                 contentAlignment = Alignment.Center
@@ -232,7 +244,7 @@ private fun ItemCard(
                 Icon(
                     imageVector = Icons.Default.Inventory2,
                     contentDescription = null,
-                    tint = if (item.isUrgent) MaterialTheme.colorScheme.onErrorContainer
+                    tint = if (isExpired) MaterialTheme.colorScheme.onErrorContainer
                     else MaterialTheme.colorScheme.onPrimaryContainer,
                     modifier = Modifier.size(20.dp)
                 )
@@ -259,17 +271,20 @@ private fun ItemCard(
                         color = MaterialTheme.colorScheme.surfaceVariant
                     ) {
                         Text(
-                            text = item.category,
+                            text = item.category.displayName,
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                         )
                     }
-                    Text(
-                        text = item.location,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Color.Gray
-                    )
+                    if (!item.notes.isNullOrEmpty()) {
+                        Text(
+                            text = item.notes,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.outline,
+                            maxLines = 1
+                        )
+                    }
                 }
             }
 
@@ -279,24 +294,70 @@ private fun ItemCard(
                 horizontalAlignment = Alignment.End
             ) {
                 Text(
-                    text = "Expires",
+                    text = DateUtils.getRelativeExpiryText(item.expirationDate),
                     style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.outline
+                    fontWeight = FontWeight.Bold,
+                    color = if (isExpired) MaterialTheme.colorScheme.error
+                    else MaterialTheme.colorScheme.primary
                 )
                 Text(
-                    text = item.expirationDate,
+                    text = DateUtils.formatDate(item.expirationDate),
                     style = MaterialTheme.typography.bodySmall,
-                    fontWeight = FontWeight.Medium,
-                    color = if (item.isUrgent) MaterialTheme.colorScheme.error
-                    else MaterialTheme.colorScheme.onSurface
+                    color = MaterialTheme.colorScheme.outline
                 )
+            }
+
+            // Action overflow menu
+            Box {
+                IconButton(onClick = { showMenu = true }) {
+                    Icon(
+                        imageVector = Icons.Default.MoreVert,
+                        contentDescription = "Options"
+                    )
+                }
+                DropdownMenu(
+                    expanded = showMenu,
+                    onDismissRequest = { showMenu = false }
+                ) {
+                    DropdownMenuItem(
+                        text = { Text("Mark as Used") },
+                        onClick = {
+                            showMenu = false
+                            onMarkAsUsed()
+                        },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Default.Check,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    )
+                    DropdownMenuItem(
+                        text = { Text("Mark as Discarded") },
+                        onClick = {
+                            showMenu = false
+                            onMarkAsDiscarded()
+                        },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Default.DeleteOutline,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.error
+                            )
+                        }
+                    )
+                }
             }
         }
     }
 }
 
+
+
 @Composable
 private fun EmptyItemsState(
+    isFiltered: Boolean,
     modifier: Modifier = Modifier
 ) {
     Box(
@@ -315,14 +376,15 @@ private fun EmptyItemsState(
             )
             Spacer(modifier = Modifier.height(16.dp))
             Text(
-                text = "No Items Found",
+                text = if (isFiltered) "No Matching Items" else "No Items Tracked Yet",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onBackground
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = "Tap the '+' button to add your first product and start tracking expiration dates.",
+                text = if (isFiltered) "Try clearing your search or category filter."
+                else "Tap the '+' button to add your first product and start tracking expiration dates.",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.outline
             )

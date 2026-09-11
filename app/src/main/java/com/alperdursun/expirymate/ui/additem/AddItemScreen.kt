@@ -3,6 +3,7 @@ package com.alperdursun.expirymate.ui.additem
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -25,6 +26,8 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
@@ -35,44 +38,55 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-
-private val categories = listOf(
-    "Food",
-    "Medicine",
-    "Cosmetics",
-    "Supplements",
-    "Household",
-    "Other"
-)
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.alperdursun.expirymate.ExpiryMateApplication
+import com.alperdursun.expirymate.domain.model.ItemCategory
+import com.alperdursun.expirymate.util.DateUtils
+import kotlinx.coroutines.flow.collectLatest
+import java.time.Instant
+import java.time.ZoneId
 
 private val reminderOptions = listOf(
-    "Same day",
-    "1 day before",
-    "3 days before",
-    "1 week before"
+    0 to "Same day",
+    1 to "1 day before",
+    3 to "3 days before",
+    7 to "7 days before",
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddItemScreen(
     onNavigateBack: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    viewModel: AddItemViewModel = viewModel(
+        factory = AddItemViewModel.Factory(
+            (LocalContext.current.applicationContext as ExpiryMateApplication).container.itemRepository
+        )
+    )
 ) {
-    var productName by remember { mutableStateOf("") }
-    var expirationDate by remember { mutableStateOf("") }
-    var selectedCategory by remember { mutableStateOf("Food") }
-    var selectedReminder by remember { mutableStateOf("1 day before") }
-    var notes by remember { mutableStateOf("") }
+    val formState by viewModel.formState.collectAsStateWithLifecycle()
+    var showDatePickerDialog by remember { mutableStateOf(value = false) }
+
+    LaunchedEffect(Unit) {
+        viewModel.saveSuccessEvent.collectLatest {
+            onNavigateBack()
+        }
+    }
 
     Scaffold(
         modifier = modifier,
@@ -152,42 +166,57 @@ fun AddItemScreen(
 
                     // Product Name Field (Required)
                     OutlinedTextField(
-                        value = productName,
-                        onValueChange = { productName = it },
+                        value = formState.productName,
+                        onValueChange = viewModel::onNameChanged,
                         label = {
                             Text(
                                 text = "Product Name *",
                                 fontWeight = FontWeight.Bold
                             )
                         },
-                        placeholder = { Text("e.g. Fresh Milk, Paracetamol, Sunscreen") },
+                        placeholder = { Text("e.g. Fresh Organic Milk, Paracetamol") },
+                        isError = formState.nameError != null,
+                        supportingText = formState.nameError?.let { { Text(it) } },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
                         shape = RoundedCornerShape(12.dp)
                     )
 
                     // Expiration Date Field (Required)
-                    OutlinedTextField(
-                        value = expirationDate,
-                        onValueChange = { expirationDate = it },
-                        label = {
-                            Text(
-                                text = "Expiration Date *",
-                                fontWeight = FontWeight.Bold
-                            )
-                        },
-                        placeholder = { Text("e.g. YYYY-MM-DD or select date") },
-                        trailingIcon = {
-                            Icon(
-                                imageVector = Icons.Default.CalendarMonth,
-                                contentDescription = "Select Date",
-                                modifier = Modifier.clickable { /* Date picker dialog placeholder */ }
-                            )
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true,
-                        shape = RoundedCornerShape(12.dp)
-                    )
+                    Box(
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        OutlinedTextField(
+                            value = DateUtils.formatDate(formState.expirationDate),
+                            onValueChange = {},
+                            readOnly = true,
+                            label = {
+                                Text(
+                                    text = "Expiration Date *",
+                                    fontWeight = FontWeight.Bold
+                                )
+                            },
+                            placeholder = { Text("Select date") },
+                            isError = formState.dateError != null,
+                            supportingText = formState.dateError?.let { { Text(it) } },
+                            trailingIcon = {
+                                IconButton(onClick = { showDatePickerDialog = true }) {
+                                    Icon(
+                                        imageVector = Icons.Default.CalendarMonth,
+                                        contentDescription = "Select Date"
+                                    )
+                                }
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
+                            shape = RoundedCornerShape(12.dp)
+                        )
+                        Box(
+                            modifier = Modifier
+                                .matchParentSize()
+                                .clickable { showDatePickerDialog = true }
+                        )
+                    }
                 }
             }
 
@@ -205,7 +234,7 @@ fun AddItemScreen(
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     Text(
-                        text = "Category & Reminder (Optional)",
+                        text = "Category & Reminder",
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.secondary
@@ -222,7 +251,7 @@ fun AddItemScreen(
                             )
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
-                                text = "Category",
+                                text = "Category *",
                                 style = MaterialTheme.typography.labelMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -234,11 +263,11 @@ fun AddItemScreen(
                                 .horizontalScroll(rememberScrollState()),
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            categories.forEach { category ->
+                            ItemCategory.entries.forEach { category ->
                                 FilterChip(
-                                    selected = category == selectedCategory,
-                                    onClick = { selectedCategory = category },
-                                    label = { Text(category) },
+                                    selected = category == formState.category,
+                                    onClick = { viewModel.onCategorySelected(category) },
+                                    label = { Text(category.displayName) },
                                     shape = RoundedCornerShape(10.dp),
                                     colors = FilterChipDefaults.filterChipColors(
                                         selectedContainerColor = MaterialTheme.colorScheme.secondaryContainer,
@@ -272,11 +301,11 @@ fun AddItemScreen(
                                 .horizontalScroll(rememberScrollState()),
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            reminderOptions.forEach { option ->
+                            reminderOptions.forEach { (days, label) ->
                                 FilterChip(
-                                    selected = option == selectedReminder,
-                                    onClick = { selectedReminder = option },
-                                    label = { Text(option) },
+                                    selected = days == formState.reminderDaysBefore,
+                                    onClick = { viewModel.onReminderDaysSelected(days) },
+                                    label = { Text(label) },
                                     shape = RoundedCornerShape(10.dp)
                                 )
                             }
@@ -285,8 +314,8 @@ fun AddItemScreen(
 
                     // Optional Notes Field
                     OutlinedTextField(
-                        value = notes,
-                        onValueChange = { notes = it },
+                        value = formState.notes,
+                        onValueChange = viewModel::onNotesChanged,
                         label = { Text("Notes (Optional)") },
                         placeholder = { Text("Add storage location, quantity, or extra details...") },
                         modifier = Modifier.fillMaxWidth(),
@@ -297,12 +326,10 @@ fun AddItemScreen(
                 }
             }
 
-            // Save Item Button (Non-functional placeholder)
+            // Save Item Button
             Button(
-                onClick = {
-                    // Non-functional placeholder for Milestone 1 - returns back
-                    onNavigateBack()
-                },
+                onClick = viewModel::saveItem,
+                enabled = !formState.isSaving,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(52.dp),
@@ -315,13 +342,53 @@ fun AddItemScreen(
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "Save Item",
+                    text = if (formState.isSaving) "Saving..." else "Save Item",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )
             }
 
             Spacer(modifier = Modifier.height(16.dp))
+        }
+    }
+
+    // Date Picker Dialog
+    if (showDatePickerDialog) {
+        val initialSelectedMillis = formState.expirationDate
+            ?.atStartOfDay(ZoneId.of("UTC"))
+            ?.toInstant()
+            ?.toEpochMilli()
+            ?: System.currentTimeMillis()
+
+        val datePickerState = rememberDatePickerState(
+            initialSelectedDateMillis = initialSelectedMillis
+        )
+
+        DatePickerDialog(
+            onDismissRequest = { showDatePickerDialog = false },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        val selectedMillis = datePickerState.selectedDateMillis
+                        if (selectedMillis != null) {
+                            val selectedLocalDate = Instant.ofEpochMilli(selectedMillis)
+                                .atZone(ZoneId.of("UTC"))
+                                .toLocalDate()
+                            viewModel.onDateSelected(selectedLocalDate)
+                        }
+                        showDatePickerDialog = false
+                    }
+                ) {
+                    Text("OK")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDatePickerDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        ) {
+            DatePicker(state = datePickerState)
         }
     }
 }

@@ -20,6 +20,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Alarm
 import androidx.compose.material.icons.filled.ErrorOutline
+import androidx.compose.material.icons.filled.Inventory2
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -29,20 +30,34 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.alperdursun.expirymate.ExpiryMateApplication
+import com.alperdursun.expirymate.domain.model.Item
+import com.alperdursun.expirymate.util.DateUtils
 
 @Composable
 fun HomeScreen(
     modifier: Modifier = Modifier,
     onAddNewItemClick: () -> Unit = {},
+    viewModel: HomeViewModel = viewModel(
+        factory = HomeViewModel.Factory(
+            (LocalContext.current.applicationContext as ExpiryMateApplication).container.itemRepository
+        )
+    )
 ) {
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -52,11 +67,15 @@ fun HomeScreen(
     ) {
         GreetingHeader()
 
-        ExpirationSummarySection()
+        ExpirationSummarySection(
+            expiredCount = uiState.expiredCount,
+            thisWeekCount = uiState.thisWeekCount,
+            laterCount = uiState.laterCount
+        )
 
-        NextToExpireSection()
+        NextToExpireSection(nextItem = uiState.nextToExpire)
 
-        ExpiringSoonSection()
+        ExpiringSoonSection(items = uiState.expiringSoonItems)
 
         QuickAddCard(onAddNewItemClick = onAddNewItemClick)
     }
@@ -90,7 +109,11 @@ private fun GreetingHeader() {
 }
 
 @Composable
-private fun ExpirationSummarySection() {
+private fun ExpirationSummarySection(
+    expiredCount: Int,
+    thisWeekCount: Int,
+    laterCount: Int
+) {
     Column {
         Text(
             text = "Overview",
@@ -105,7 +128,7 @@ private fun ExpirationSummarySection() {
         ) {
             SummaryCard(
                 title = "Expired",
-                count = "0",
+                count = expiredCount.toString(),
                 icon = Icons.Default.ErrorOutline,
                 containerColor = MaterialTheme.colorScheme.errorContainer,
                 contentColor = MaterialTheme.colorScheme.onErrorContainer,
@@ -113,7 +136,7 @@ private fun ExpirationSummarySection() {
             )
             SummaryCard(
                 title = "This Week",
-                count = "3",
+                count = thisWeekCount.toString(),
                 icon = Icons.Default.Alarm,
                 containerColor = MaterialTheme.colorScheme.tertiaryContainer,
                 contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
@@ -121,7 +144,7 @@ private fun ExpirationSummarySection() {
             )
             SummaryCard(
                 title = "Later",
-                count = "12",
+                count = laterCount.toString(),
                 icon = Icons.Default.Schedule,
                 containerColor = MaterialTheme.colorScheme.secondaryContainer,
                 contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
@@ -174,7 +197,7 @@ private fun SummaryCard(
 }
 
 @Composable
-private fun NextToExpireSection() {
+private fun NextToExpireSection(nextItem: Item?) {
     Column {
         Text(
             text = "Next to Expire",
@@ -183,61 +206,86 @@ private fun NextToExpireSection() {
             color = MaterialTheme.colorScheme.onBackground
         )
         Spacer(modifier = Modifier.height(10.dp))
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant
-            )
-        ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                verticalAlignment = Alignment.CenterVertically
+
+        if (nextItem == null) {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                )
             ) {
-                Box(
+                Text(
+                    text = "No active products tracked yet.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.outline,
+                    modifier = Modifier.padding(16.dp)
+                )
+            }
+        } else {
+            val isExpired = DateUtils.isExpired(nextItem.expirationDate)
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                )
+            ) {
+                Row(
                     modifier = Modifier
-                        .size(48.dp)
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)),
-                    contentAlignment = Alignment.Center
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.Schedule,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(24.dp)
-                    )
-                }
-                Spacer(modifier = Modifier.width(14.dp))
-                Column(
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Text(
-                        text = "Fresh Organic Milk",
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Spacer(modifier = Modifier.height(2.dp))
-                    Text(
-                        text = "Category: Food • Fridge",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
-                    )
-                }
-                Surface(
-                    shape = RoundedCornerShape(20.dp),
-                    color = MaterialTheme.colorScheme.errorContainer
-                ) {
-                    Text(
-                        text = "In 2 days",
-                        style = MaterialTheme.typography.labelSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onErrorContainer,
-                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
-                    )
+                    Box(
+                        modifier = Modifier
+                            .size(48.dp)
+                            .clip(CircleShape)
+                            .background(
+                                if (isExpired) MaterialTheme.colorScheme.errorContainer
+                                else MaterialTheme.colorScheme.primaryContainer
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Schedule,
+                            contentDescription = null,
+                            tint = if (isExpired) MaterialTheme.colorScheme.onErrorContainer
+                            else MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(14.dp))
+                    Column(
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text(
+                            text = nextItem.name,
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(
+                            text = "Category: ${nextItem.category.displayName}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                        )
+                    }
+                    Surface(
+                        shape = RoundedCornerShape(20.dp),
+                        color = if (isExpired) MaterialTheme.colorScheme.errorContainer
+                        else MaterialTheme.colorScheme.tertiaryContainer
+                    ) {
+                        Text(
+                            text = DateUtils.getRelativeExpiryText(nextItem.expirationDate),
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = if (isExpired) MaterialTheme.colorScheme.onErrorContainer
+                            else MaterialTheme.colorScheme.onTertiaryContainer,
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
+                        )
+                    }
                 }
             }
         }
@@ -245,7 +293,7 @@ private fun NextToExpireSection() {
 }
 
 @Composable
-private fun ExpiringSoonSection() {
+private fun ExpiringSoonSection(items: List<Item>) {
     Column {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -258,46 +306,50 @@ private fun ExpiringSoonSection() {
                 fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.onBackground
             )
-            Text(
-                text = "3 items",
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.outline
-            )
+            if (items.isNotEmpty()) {
+                Text(
+                    text = "${items.size} item${if (items.size > 1) "s" else ""}",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.outline
+                )
+            }
         }
         Spacer(modifier = Modifier.height(10.dp))
 
-        Column(
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            PlaceholderItemCard(
-                name = "Greek Yogurt 500g",
-                category = "Food",
-                expirationText = "Expires in 4 days (Jan 17)",
-                urgencyColor = MaterialTheme.colorScheme.tertiary
-            )
-            PlaceholderItemCard(
-                name = "Vitamin C Supplements",
-                category = "Supplements",
-                expirationText = "Expires in 6 days (Jan 19)",
-                urgencyColor = MaterialTheme.colorScheme.secondary
-            )
-            PlaceholderItemCard(
-                name = "Pain Relief Gel",
-                category = "Medicine",
-                expirationText = "Expires in 12 days (Jan 25)",
-                urgencyColor = MaterialTheme.colorScheme.primary
-            )
+        if (items.isEmpty()) {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+            ) {
+                Text(
+                    text = "No items expiring soon.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.outline,
+                    modifier = Modifier.padding(14.dp)
+                )
+            }
+        } else {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                items.forEach { item ->
+                    ItemSummaryCard(item = item)
+                }
+            }
         }
     }
 }
 
 @Composable
-private fun PlaceholderItemCard(
-    name: String,
-    category: String,
-    expirationText: String,
-    urgencyColor: Color
-) {
+private fun ItemSummaryCard(item: Item) {
+    val isExpired = DateUtils.isExpired(item.expirationDate)
+    val urgencyColor = when {
+        isExpired -> MaterialTheme.colorScheme.error
+        DateUtils.isThisWeek(item.expirationDate) -> MaterialTheme.colorScheme.tertiary
+        else -> MaterialTheme.colorScheme.primary
+    }
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
@@ -323,22 +375,23 @@ private fun PlaceholderItemCard(
                 modifier = Modifier.weight(1f)
             ) {
                 Text(
-                    text = name,
+                    text = item.name,
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
-                    text = category,
+                    text = item.category.displayName,
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                 )
             }
             Text(
-                text = expirationText,
+                text = DateUtils.getRelativeExpiryText(item.expirationDate),
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                fontSize = 12.sp
+                color = if (isExpired) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
+                fontSize = 12.sp,
+                fontWeight = if (isExpired) FontWeight.Bold else FontWeight.Normal
             )
         }
     }
@@ -361,12 +414,19 @@ private fun QuickAddCard(
                 .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            Icon(
+                imageVector = Icons.Default.Inventory2,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(32.dp)
+            )
+            Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = "Keep your pantry and medicine cabinet organized",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(12.dp))
             Button(
                 onClick = onAddNewItemClick,
                 shape = RoundedCornerShape(12.dp)
@@ -377,7 +437,7 @@ private fun QuickAddCard(
                     modifier = Modifier.size(18.dp)
                 )
                 Spacer(modifier = Modifier.width(6.dp))
-                Text(text = "Add Item")
+                Text(text = "Add Product Item")
             }
         }
     }

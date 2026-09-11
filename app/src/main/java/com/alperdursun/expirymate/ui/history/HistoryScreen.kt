@@ -10,32 +10,47 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material.icons.filled.History
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-
-private val historyFilters = listOf("All", "Used", "Discarded")
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.alperdursun.expirymate.ExpiryMateApplication
+import com.alperdursun.expirymate.domain.model.Item
+import com.alperdursun.expirymate.domain.model.ItemStatus
+import com.alperdursun.expirymate.util.DateUtils
 
 @Composable
 fun HistoryScreen(
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    viewModel: HistoryViewModel = viewModel(
+        factory = HistoryViewModel.Factory(
+            (LocalContext.current.applicationContext as ExpiryMateApplication).container.itemRepository
+        )
+    )
 ) {
-    var selectedFilter by remember { mutableStateOf("All") }
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     Column(
         modifier = modifier
@@ -57,11 +72,19 @@ fun HistoryScreen(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            historyFilters.forEach { filter ->
+            HistoryFilter.entries.forEach { filter ->
                 FilterChip(
-                    selected = filter == selectedFilter,
-                    onClick = { selectedFilter = filter },
-                    label = { Text(text = filter) },
+                    selected = filter == uiState.selectedFilter,
+                    onClick = { viewModel.onFilterSelected(filter) },
+                    label = {
+                        Text(
+                            text = when (filter) {
+                                HistoryFilter.ALL -> "All"
+                                HistoryFilter.USED -> "Used"
+                                HistoryFilter.DISCARDED -> "Discarded"
+                            }
+                        )
+                    },
                     shape = RoundedCornerShape(12.dp),
                     colors = FilterChipDefaults.filterChipColors(
                         selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
@@ -71,45 +94,156 @@ fun HistoryScreen(
             }
         }
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
-        // Empty State Placeholder
-        Box(
+        // Items List or Empty State
+        if (uiState.items.isEmpty()) {
+            EmptyHistoryState(
+                filter = uiState.selectedFilter,
+                modifier = Modifier.weight(1f)
+            )
+        } else {
+            LazyColumn(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                items(
+                    items = uiState.items,
+                    key = { it.id }
+                ) { item ->
+                    HistoryItemCard(item = item)
+                }
+                item {
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun HistoryItemCard(item: Item) {
+    val isUsed = item.status == ItemStatus.USED
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+    ) {
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .weight(1f),
-            contentAlignment = Alignment.Center
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center,
-                modifier = Modifier.padding(32.dp)
+            Surface(
+                shape = RoundedCornerShape(12.dp),
+                color = if (isUsed) MaterialTheme.colorScheme.primaryContainer
+                else MaterialTheme.colorScheme.errorContainer
             ) {
                 Icon(
-                    imageVector = Icons.Default.History,
+                    imageVector = if (isUsed) Icons.Default.Check else Icons.Default.DeleteOutline,
                     contentDescription = null,
-                    modifier = Modifier.size(72.dp),
-                    tint = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                Text(
-                    text = "No History Yet",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onBackground
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                Text(
-                    text = "Items marked as 'Used' or 'Discarded' will appear here. Tracking product usage helps you reduce food waste and optimize future purchases.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.outline,
-                    textAlign = TextAlign.Center
+                    tint = if (isUsed) MaterialTheme.colorScheme.onPrimaryContainer
+                    else MaterialTheme.colorScheme.onErrorContainer,
+                    modifier = Modifier
+                        .padding(10.dp)
+                        .size(20.dp)
                 )
             }
+
+            Spacer(modifier = Modifier.width(14.dp))
+
+            Column(
+                modifier = Modifier.weight(1f)
+            ) {
+                Text(
+                    text = item.name,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = "Category: ${item.category.displayName}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.outline
+                )
+            }
+
+            Column(
+                horizontalAlignment = Alignment.End
+            ) {
+                Surface(
+                    shape = RoundedCornerShape(6.dp),
+                    color = if (isUsed) MaterialTheme.colorScheme.primaryContainer
+                    else MaterialTheme.colorScheme.errorContainer
+                ) {
+                    Text(
+                        text = if (isUsed) "Used" else "Discarded",
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = if (isUsed) MaterialTheme.colorScheme.onPrimaryContainer
+                        else MaterialTheme.colorScheme.onErrorContainer,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                    )
+                }
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "Expired ${DateUtils.formatDate(item.expirationDate)}",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.outline
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun EmptyHistoryState(
+    filter: HistoryFilter,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier.fillMaxWidth(),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
+            modifier = Modifier.padding(32.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Default.History,
+                contentDescription = null,
+                modifier = Modifier.size(72.dp),
+                tint = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Text(
+                text = when (filter) {
+                    HistoryFilter.ALL -> "No History Yet"
+                    HistoryFilter.USED -> "No Used Items"
+                    HistoryFilter.DISCARDED -> "No Discarded Items"
+                },
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onBackground
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text(
+                text = "Items marked as 'Used' or 'Discarded' will appear here. Tracking product usage helps you reduce food waste and optimize future purchases.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.outline,
+                textAlign = TextAlign.Center
+            )
         }
     }
 }
