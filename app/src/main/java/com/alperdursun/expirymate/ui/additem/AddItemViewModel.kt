@@ -9,12 +9,12 @@ import com.alperdursun.expirymate.data.repository.ItemRepository
 import com.alperdursun.expirymate.domain.model.Item
 import com.alperdursun.expirymate.domain.model.ItemCategory
 import com.alperdursun.expirymate.domain.model.ItemStatus
-import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.LocalDate
@@ -27,7 +27,7 @@ data class AddItemFormState(
     val notes: String = "",
     val nameError: String? = null,
     val dateError: String? = null,
-    val isSaving: Boolean = false
+    val isSaving: Boolean = false,
 )
 
 class AddItemViewModel(
@@ -37,8 +37,8 @@ class AddItemViewModel(
     private val _formState = MutableStateFlow(AddItemFormState())
     val formState: StateFlow<AddItemFormState> = _formState.asStateFlow()
 
-    private val _saveSuccessEvent = MutableSharedFlow<Unit>()
-    val saveSuccessEvent: SharedFlow<Unit> = _saveSuccessEvent.asSharedFlow()
+    private val _saveSuccessEvent = Channel<Unit>(Channel.BUFFERED)
+    val saveSuccessEvent: Flow<Unit> = _saveSuccessEvent.receiveAsFlow()
 
     fun onNameChanged(name: String) {
         _formState.update {
@@ -107,7 +107,9 @@ class AddItemViewModel(
                     status = ItemStatus.ACTIVE
                 )
                 itemRepository.addItem(newItem)
-                _saveSuccessEvent.emit(Unit)
+                _saveSuccessEvent.send(Unit)
+            } catch (_: Exception) {
+                _formState.update { it.copy(nameError = "Failed to save item. Please try again.") }
             } finally {
                 _formState.update { it.copy(isSaving = false) }
             }

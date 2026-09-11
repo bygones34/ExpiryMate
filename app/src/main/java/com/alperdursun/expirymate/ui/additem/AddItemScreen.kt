@@ -59,7 +59,8 @@ import com.alperdursun.expirymate.domain.model.ItemCategory
 import com.alperdursun.expirymate.util.DateUtils
 import kotlinx.coroutines.flow.collectLatest
 import java.time.Instant
-import java.time.ZoneId
+import java.time.LocalDate
+import java.time.ZoneOffset
 
 private val reminderOptions = listOf(
     0 to "Same day",
@@ -75,7 +76,7 @@ fun AddItemScreen(
     modifier: Modifier = Modifier,
     viewModel: AddItemViewModel = viewModel(
         factory = AddItemViewModel.Factory(
-            (LocalContext.current.applicationContext as ExpiryMateApplication).container.itemRepository
+            (LocalContext.current.applicationContext as ExpiryMateApplication).container.itemRepository,
         )
     )
 ) {
@@ -355,10 +356,13 @@ fun AddItemScreen(
     // Date Picker Dialog
     if (showDatePickerDialog) {
         val initialSelectedMillis = formState.expirationDate
-            ?.atStartOfDay(ZoneId.of("UTC"))
+            ?.atStartOfDay(ZoneOffset.UTC)
             ?.toInstant()
             ?.toEpochMilli()
-            ?: System.currentTimeMillis()
+            ?: LocalDate.now()
+                .atStartOfDay(ZoneOffset.UTC)
+                .toInstant()
+                .toEpochMilli()
 
         val datePickerState = rememberDatePickerState(
             initialSelectedDateMillis = initialSelectedMillis
@@ -372,7 +376,7 @@ fun AddItemScreen(
                         val selectedMillis = datePickerState.selectedDateMillis
                         if (selectedMillis != null) {
                             val selectedLocalDate = Instant.ofEpochMilli(selectedMillis)
-                                .atZone(ZoneId.of("UTC"))
+                                .atZone(ZoneOffset.UTC)
                                 .toLocalDate()
                             viewModel.onDateSelected(selectedLocalDate)
                         }

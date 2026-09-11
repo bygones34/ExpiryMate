@@ -6,7 +6,7 @@ import com.alperdursun.expirymate.domain.model.ItemStatus
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
-import java.time.ZoneId
+import java.time.ZoneOffset
 
 class RoomConverters {
 
@@ -23,13 +23,13 @@ class RoomConverters {
     @TypeConverter
     fun fromTimestamp(value: Long?): LocalDateTime? {
         return value?.let {
-            LocalDateTime.ofInstant(Instant.ofEpochMilli(it), ZoneId.systemDefault())
+            LocalDateTime.ofInstant(Instant.ofEpochMilli(it), ZoneOffset.UTC)
         }
     }
 
     @TypeConverter
     fun toTimestamp(date: LocalDateTime?): Long? {
-        return date?.atZone(ZoneId.systemDefault())?.toInstant()?.toEpochMilli()
+        return date?.toInstant(ZoneOffset.UTC)?.toEpochMilli()
     }
 
     @TypeConverter
