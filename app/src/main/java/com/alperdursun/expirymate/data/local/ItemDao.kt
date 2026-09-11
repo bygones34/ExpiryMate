@@ -19,6 +19,9 @@ interface ItemDao {
     fun observeHistoryItems(): Flow<List<Item>>
 
     @Query("SELECT * FROM items WHERE id = :id")
+    fun observeItemById(id: Long): Flow<Item?>
+
+    @Query("SELECT * FROM items WHERE id = :id")
     suspend fun getItemById(id: Long): Item?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)

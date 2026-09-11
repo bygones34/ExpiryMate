@@ -45,6 +45,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.alperdursun.expirymate.ExpiryMateApplication
+import com.alperdursun.expirymate.domain.model.AppThemeMode
 
 private val reminderOptions = listOf(
     0 to "Same day",
@@ -67,11 +68,19 @@ fun SettingsScreen(
         }
     )
 ) {
+    val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    var darkThemeEnabled by remember { mutableStateOf(false) }
-    var showDefaultDaysDialog by remember { mutableStateOf(false) }
+    var showDefaultDaysDialog by remember { mutableStateOf(value = false) }
+    var showThemeDialog by remember { mutableStateOf(value = false) }
 
     val defaultReminderText = reminderOptions.find { it.first == uiState.defaultReminderDays }?.second ?: "1 day before"
+    val appVersionName = remember {
+        try {
+            context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "1.0"
+        } catch (_: Exception) {
+            "1.0"
+        }
+    }
 
     Column(
         modifier = modifier
@@ -107,17 +116,18 @@ fun SettingsScreen(
 
         // Section 2: Appearance
         SettingsSection(title = "Appearance") {
-            SettingsSwitchRow(
-                icon = Icons.Default.Palette,
-                title = "Dark Theme",
-                subtitle = "Use dark colors for the interface",
-                checked = darkThemeEnabled,
-                onCheckedChange = { darkThemeEnabled = it }
-            )
             SettingsClickableRow(
                 icon = Icons.Default.Palette,
+                title = "Theme Mode",
+                value = uiState.themeMode.displayName,
+                onClick = { showThemeDialog = true }
+            )
+            SettingsSwitchRow(
+                icon = Icons.Default.Palette,
                 title = "Dynamic Colors",
-                value = "System Default"
+                subtitle = "Use Material You dynamic color palette",
+                checked = uiState.isDynamicColorsEnabled,
+                onCheckedChange = viewModel::onDynamicColorsToggled
             )
         }
 
@@ -149,7 +159,7 @@ fun SettingsScreen(
             SettingsClickableRow(
                 icon = Icons.Default.Info,
                 title = "Version",
-                value = "1.0.0 (Milestone 3)"
+                value = appVersionName
             )
             Surface(
                 modifier = Modifier
@@ -178,6 +188,45 @@ fun SettingsScreen(
         }
 
         Spacer(modifier = Modifier.height(16.dp))
+    }
+
+    // Theme Mode Selection Dialog
+    if (showThemeDialog) {
+        AlertDialog(
+            onDismissRequest = { showThemeDialog = false },
+            title = { Text("Select Theme") },
+            text = {
+                Column {
+                    AppThemeMode.entries.forEach { mode ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    viewModel.onThemeModeSelected(mode)
+                                    showThemeDialog = false
+                                }
+                                .padding(vertical = 10.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            RadioButton(
+                                selected = mode == uiState.themeMode,
+                                onClick = {
+                                    viewModel.onThemeModeSelected(mode)
+                                    showThemeDialog = false
+                                }
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(text = mode.displayName, style = MaterialTheme.typography.bodyMedium)
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showThemeDialog = false }) {
+                    Text("Close")
+                }
+            }
+        )
     }
 
     // Default Reminder Days Selection Dialog

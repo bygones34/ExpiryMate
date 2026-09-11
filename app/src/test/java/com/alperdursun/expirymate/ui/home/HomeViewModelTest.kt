@@ -52,6 +52,7 @@ class HomeViewModelTest {
         val fakeDao = object : ItemDao {
             override fun observeActiveItems(): Flow<List<Item>> = flowOf(items)
             override fun observeHistoryItems(): Flow<List<Item>> = flowOf(emptyList())
+            override fun observeItemById(id: Long): Flow<Item?> = flowOf(null)
             override suspend fun getItemById(id: Long): Item? = null
             override suspend fun insertItem(item: Item): Long = 0L
             override suspend fun updateItem(item: Item) {}

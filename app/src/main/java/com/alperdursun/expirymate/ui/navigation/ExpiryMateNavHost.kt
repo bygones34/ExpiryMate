@@ -26,13 +26,17 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.alperdursun.expirymate.ui.additem.AddItemScreen
+import com.alperdursun.expirymate.ui.edititem.EditItemScreen
 import com.alperdursun.expirymate.ui.history.HistoryScreen
 import com.alperdursun.expirymate.ui.home.HomeScreen
+import com.alperdursun.expirymate.ui.itemdetail.ItemDetailScreen
 import com.alperdursun.expirymate.ui.items.ItemsScreen
 import com.alperdursun.expirymate.ui.settings.SettingsScreen
 
@@ -65,15 +69,10 @@ fun ExpiryMateApp(
                             onClick = {
                                 if (currentRoute != screen.route) {
                                     navController.navigate(screen.route) {
-                                        // Pop up to the start destination of the graph to
-                                        // avoid building up a large stack of destinations
                                         popUpTo(navController.graph.findStartDestination().id) {
                                             saveState = true
                                         }
-                                        // Avoid multiple copies of the same destination when
-                                        // reselecting the same item
                                         launchSingleTop = true
-                                        // Restore state when reselecting a previously selected item
                                         restoreState = true
                                     }
                                 }
@@ -135,20 +134,58 @@ fun ExpiryMateApp(
                 HomeScreen(
                     onAddNewItemClick = {
                         navController.navigate(Screen.AddItem.route)
+                    },
+                    onItemClick = { itemId ->
+                        navController.navigate(Screen.ItemDetail.createRoute(itemId))
                     }
                 )
             }
             composable(Screen.Items.route) {
-                ItemsScreen()
+                ItemsScreen(
+                    onItemClick = { itemId ->
+                        navController.navigate(Screen.ItemDetail.createRoute(itemId))
+                    }
+                )
             }
             composable(Screen.History.route) {
-                HistoryScreen()
+                HistoryScreen(
+                    onItemClick = { itemId ->
+                        navController.navigate(Screen.ItemDetail.createRoute(itemId))
+                    }
+                )
             }
             composable(Screen.Settings.route) {
                 SettingsScreen()
             }
             composable(Screen.AddItem.route) {
                 AddItemScreen(
+                    onNavigateBack = {
+                        navController.popBackStack()
+                    }
+                )
+            }
+            composable(
+                route = Screen.ItemDetail.route,
+                arguments = listOf(navArgument("itemId") { type = NavType.LongType })
+            ) { backStackEntry ->
+                val itemId = backStackEntry.arguments?.getLong("itemId") ?: -1L
+                ItemDetailScreen(
+                    itemId = itemId,
+                    onNavigateBack = {
+                        navController.popBackStack()
+                    },
+                    onEditItem = { id ->
+                        navController.navigate(Screen.EditItem.createRoute(id))
+                    }
+                )
+            }
+            composable(
+                route = Screen.EditItem.route,
+                arguments = listOf(navArgument("itemId") { type = NavType.LongType })
+            ) { backStackEntry ->
+                val itemId = backStackEntry.arguments?.getLong("itemId") ?: -1L
+                EditItemScreen(
+                    itemId = itemId,
                     onNavigateBack = {
                         navController.popBackStack()
                     }

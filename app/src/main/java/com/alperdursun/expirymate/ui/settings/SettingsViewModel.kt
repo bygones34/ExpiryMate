@@ -8,6 +8,7 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import com.alperdursun.expirymate.data.reminder.ReminderScheduler
 import com.alperdursun.expirymate.data.repository.ItemRepository
 import com.alperdursun.expirymate.data.repository.SettingsRepository
+import com.alperdursun.expirymate.domain.model.AppThemeMode
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -18,26 +19,32 @@ import kotlinx.coroutines.launch
 data class SettingsUiState(
     val isRemindersEnabled: Boolean = true,
     val defaultReminderDays: Int = 1,
+    val themeMode: AppThemeMode = AppThemeMode.SYSTEM,
+    val isDynamicColorsEnabled: Boolean = true,
 )
 
 class SettingsViewModel(
     private val settingsRepository: SettingsRepository,
     private val itemRepository: ItemRepository,
-    private val reminderScheduler: ReminderScheduler
+    private val reminderScheduler: ReminderScheduler,
 ) : ViewModel() {
 
     val uiState: StateFlow<SettingsUiState> = combine(
         settingsRepository.isRemindersEnabled,
-        settingsRepository.defaultReminderDays
-    ) { enabled, defaultDays ->
+        settingsRepository.defaultReminderDays,
+        settingsRepository.themeMode,
+        settingsRepository.isDynamicColorsEnabled,
+    ) { enabled, defaultDays, theme, dynamicColors ->
         SettingsUiState(
             isRemindersEnabled = enabled,
-            defaultReminderDays = defaultDays
+            defaultReminderDays = defaultDays,
+            themeMode = theme,
+            isDynamicColorsEnabled = dynamicColors,
         )
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
-        initialValue = SettingsUiState()
+        initialValue = SettingsUiState(),
     )
 
     fun onRemindersEnabledToggled(enabled: Boolean) {
@@ -58,11 +65,23 @@ class SettingsViewModel(
         }
     }
 
+    fun onThemeModeSelected(mode: AppThemeMode) {
+        viewModelScope.launch {
+            settingsRepository.setThemeMode(mode)
+        }
+    }
+
+    fun onDynamicColorsToggled(enabled: Boolean) {
+        viewModelScope.launch {
+            settingsRepository.setDynamicColorsEnabled(enabled)
+        }
+    }
+
     companion object {
         fun Factory(
             settingsRepository: SettingsRepository,
             itemRepository: ItemRepository,
-            reminderScheduler: ReminderScheduler
+            reminderScheduler: ReminderScheduler,
         ): ViewModelProvider.Factory = viewModelFactory {
             initializer {
                 SettingsViewModel(settingsRepository, itemRepository, reminderScheduler)

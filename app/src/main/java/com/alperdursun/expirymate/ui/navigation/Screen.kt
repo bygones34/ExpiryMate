@@ -15,7 +15,7 @@ sealed class Screen(
     val route: String,
     val title: String,
     val selectedIcon: ImageVector? = null,
-    val unselectedIcon: ImageVector? = null
+    val unselectedIcon: ImageVector? = null,
 ) {
     data object Home : Screen(
         route = "home",
@@ -49,6 +49,20 @@ sealed class Screen(
         route = "add_item",
         title = "Add Item"
     )
+
+    data object ItemDetail : Screen(
+        route = "item/{itemId}",
+        title = "Item Detail"
+    ) {
+        fun createRoute(itemId: Long): String = "item/$itemId"
+    }
+
+    data object EditItem : Screen(
+        route = "item/{itemId}/edit",
+        title = "Edit Item"
+    ) {
+        fun createRoute(itemId: Long): String = "item/$itemId/edit"
+    }
 
     companion object {
         val bottomNavItems = listOf(Home, Items, History, Settings)

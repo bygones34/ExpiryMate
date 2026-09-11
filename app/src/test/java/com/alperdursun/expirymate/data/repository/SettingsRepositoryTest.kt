@@ -1,6 +1,7 @@
 package com.alperdursun.expirymate.data.repository
 
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
+import com.alperdursun.expirymate.domain.model.AppThemeMode
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.TestScope
@@ -24,7 +25,7 @@ class SettingsRepositoryTest {
     private fun createRepository(): SettingsRepository {
         val testDataStore = PreferenceDataStoreFactory.create(
             scope = testScope,
-            produceFile = { tmpFolder.newFile("test_settings.preferences_pb") }
+            produceFile = { tmpFolder.newFile("test_settings_${System.nanoTime()}.preferences_pb") }
         )
         return SettingsRepository(testDataStore)
     }
@@ -35,6 +36,8 @@ class SettingsRepositoryTest {
 
         assertTrue(repository.isRemindersEnabled.first())
         assertEquals(1, repository.defaultReminderDays.first())
+        assertEquals(AppThemeMode.SYSTEM, repository.themeMode.first())
+        assertTrue(repository.isDynamicColorsEnabled.first())
     }
 
     @Test
@@ -54,5 +57,16 @@ class SettingsRepositoryTest {
 
         repository.setDefaultReminderDays(3)
         assertEquals(3, repository.defaultReminderDays.first())
+    }
+
+    @Test
+    fun testUpdateThemeModeAndDynamicColors() = runTest(testDispatcher) {
+        val repository = createRepository()
+
+        repository.setThemeMode(AppThemeMode.DARK)
+        assertEquals(AppThemeMode.DARK, repository.themeMode.first())
+
+        repository.setDynamicColorsEnabled(false)
+        assertEquals(false, repository.isDynamicColorsEnabled.first())
     }
 }

@@ -1,6 +1,7 @@
 package com.alperdursun.expirymate.ui.items
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -60,6 +61,7 @@ import com.alperdursun.expirymate.util.DateUtils
 @Composable
 fun ItemsScreen(
     modifier: Modifier = Modifier,
+    onItemClick: (Long) -> Unit = {},
     viewModel: ItemsViewModel = viewModel(
         factory = run {
             val appContainer = (LocalContext.current.applicationContext as ExpiryMateApplication).container
@@ -200,6 +202,7 @@ fun ItemsScreen(
                 ) { item ->
                     ItemCard(
                         item = item,
+                        onClick = { onItemClick(item.id) },
                         onMarkAsUsed = { viewModel.markAsUsed(item.id) },
                         onMarkAsDiscarded = { viewModel.markAsDiscarded(item.id) }
                     )
@@ -215,6 +218,7 @@ fun ItemsScreen(
 @Composable
 private fun ItemCard(
     item: Item,
+    onClick: () -> Unit,
     onMarkAsUsed: () -> Unit,
     onMarkAsDiscarded: () -> Unit
 ) {
@@ -222,7 +226,9 @@ private fun ItemCard(
     val isExpired = DateUtils.isExpired(item.expirationDate)
 
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() },
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
@@ -356,8 +362,6 @@ private fun ItemCard(
         }
     }
 }
-
-
 
 @Composable
 private fun EmptyItemsState(

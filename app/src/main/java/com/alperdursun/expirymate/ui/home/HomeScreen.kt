@@ -1,6 +1,7 @@
 package com.alperdursun.expirymate.ui.home
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -50,6 +51,7 @@ import com.alperdursun.expirymate.util.DateUtils
 fun HomeScreen(
     modifier: Modifier = Modifier,
     onAddNewItemClick: () -> Unit = {},
+    onItemClick: (Long) -> Unit = {},
     viewModel: HomeViewModel = viewModel(
         factory = HomeViewModel.Factory(
             (LocalContext.current.applicationContext as ExpiryMateApplication).container.itemRepository
@@ -73,9 +75,15 @@ fun HomeScreen(
             laterCount = uiState.laterCount
         )
 
-        NextToExpireSection(nextItem = uiState.nextToExpire)
+        NextToExpireSection(
+            nextItem = uiState.nextToExpire,
+            onItemClick = onItemClick
+        )
 
-        ExpiringSoonSection(items = uiState.expiringSoonItems)
+        ExpiringSoonSection(
+            items = uiState.expiringSoonItems,
+            onItemClick = onItemClick
+        )
 
         QuickAddCard(onAddNewItemClick = onAddNewItemClick)
     }
@@ -197,7 +205,10 @@ private fun SummaryCard(
 }
 
 @Composable
-private fun NextToExpireSection(nextItem: Item?) {
+private fun NextToExpireSection(
+    nextItem: Item?,
+    onItemClick: (Long) -> Unit
+) {
     Column {
         Text(
             text = "Next to Expire",
@@ -225,7 +236,9 @@ private fun NextToExpireSection(nextItem: Item?) {
         } else {
             val isExpired = DateUtils.isExpired(nextItem.expirationDate)
             Card(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { onItemClick(nextItem.id) },
                 shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.surfaceVariant
@@ -293,7 +306,10 @@ private fun NextToExpireSection(nextItem: Item?) {
 }
 
 @Composable
-private fun ExpiringSoonSection(items: List<Item>) {
+private fun ExpiringSoonSection(
+    items: List<Item>,
+    onItemClick: (Long) -> Unit
+) {
     Column {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -334,7 +350,10 @@ private fun ExpiringSoonSection(items: List<Item>) {
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 items.forEach { item ->
-                    ItemSummaryCard(item = item)
+                    ItemSummaryCard(
+                        item = item,
+                        onClick = { onItemClick(item.id) }
+                    )
                 }
             }
         }
@@ -342,7 +361,10 @@ private fun ExpiringSoonSection(items: List<Item>) {
 }
 
 @Composable
-private fun ItemSummaryCard(item: Item) {
+private fun ItemSummaryCard(
+    item: Item,
+    onClick: () -> Unit
+) {
     val isExpired = DateUtils.isExpired(item.expirationDate)
     val urgencyColor = when {
         isExpired -> MaterialTheme.colorScheme.error
@@ -351,7 +373,9 @@ private fun ItemSummaryCard(item: Item) {
     }
 
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() },
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface

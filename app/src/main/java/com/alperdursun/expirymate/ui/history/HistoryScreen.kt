@@ -1,5 +1,6 @@
 package com.alperdursun.expirymate.ui.history
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -44,6 +45,7 @@ import com.alperdursun.expirymate.util.DateUtils
 @Composable
 fun HistoryScreen(
     modifier: Modifier = Modifier,
+    onItemClick: (Long) -> Unit = {},
     viewModel: HistoryViewModel = viewModel(
         factory = HistoryViewModel.Factory(
             (LocalContext.current.applicationContext as ExpiryMateApplication).container.itemRepository
@@ -111,7 +113,10 @@ fun HistoryScreen(
                     items = uiState.items,
                     key = { it.id }
                 ) { item ->
-                    HistoryItemCard(item = item)
+                    HistoryItemCard(
+                        item = item,
+                        onClick = { onItemClick(item.id) }
+                    )
                 }
                 item {
                     Spacer(modifier = Modifier.height(16.dp))
@@ -122,11 +127,16 @@ fun HistoryScreen(
 }
 
 @Composable
-private fun HistoryItemCard(item: Item) {
+private fun HistoryItemCard(
+    item: Item,
+    onClick: () -> Unit
+) {
     val isUsed = item.status == ItemStatus.USED
 
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() },
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
@@ -163,7 +173,7 @@ private fun HistoryItemCard(item: Item) {
                 Text(
                     text = item.name,
                     style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.SemiBold,
+                    fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Spacer(modifier = Modifier.height(2.dp))
