@@ -8,7 +8,7 @@ import androidx.room.TypeConverters
 import com.alperdursun.expirymate.data.local.converters.RoomConverters
 import com.alperdursun.expirymate.domain.model.Item
 
-@Database(entities = [Item::class], version = 1, exportSchema = false)
+@Database(entities = [Item::class], version = 1, exportSchema = true)
 @TypeConverters(RoomConverters::class)
 abstract class AppDatabase : RoomDatabase() {
 

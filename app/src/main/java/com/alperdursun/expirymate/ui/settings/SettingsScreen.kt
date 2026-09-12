@@ -16,9 +16,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.filled.Backup
 import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material3.AlertDialog
@@ -131,28 +129,7 @@ fun SettingsScreen(
             )
         }
 
-        // Section 3: Language
-        SettingsSection(title = "Language") {
-            SettingsClickableRow(
-                icon = Icons.Default.Language,
-                title = "App Language",
-                value = "English (US)"
-            )
-        }
 
-        // Section 4: Data
-        SettingsSection(title = "Data") {
-            SettingsClickableRow(
-                icon = Icons.Default.Backup,
-                title = "Export Product List",
-                value = "CSV / JSON"
-            )
-            SettingsClickableRow(
-                icon = Icons.Default.Backup,
-                title = "Import Data",
-                value = "Restore backup"
-            )
-        }
 
         // Section 5: About
         SettingsSection(title = "About") {
