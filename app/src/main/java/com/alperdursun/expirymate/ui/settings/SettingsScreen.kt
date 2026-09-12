@@ -1,5 +1,7 @@
 package com.alperdursun.expirymate.ui.settings
 
+import android.content.ActivityNotFoundException
+import android.content.Intent
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -19,6 +21,7 @@ import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Palette
+import androidx.compose.material.icons.filled.PrivacyTip
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -40,10 +43,13 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.alperdursun.expirymate.ExpiryMateApplication
 import com.alperdursun.expirymate.domain.model.AppThemeMode
+
+private const val PRIVACY_POLICY_URL = "https://bygones34.github.io/ExpiryMate/privacy-policy.html"
 
 private val reminderOptions = listOf(
     0 to "Same day",
@@ -74,9 +80,9 @@ fun SettingsScreen(
     val defaultReminderText = reminderOptions.find { it.first == uiState.defaultReminderDays }?.second ?: "1 day before"
     val appVersionName = remember {
         try {
-            context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "1.0"
+            context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "1.0.0"
         } catch (_: Exception) {
-            "1.0"
+            "1.0.0"
         }
     }
 
@@ -129,14 +135,25 @@ fun SettingsScreen(
             )
         }
 
-
-
-        // Section 5: About
+        // Section 3: About
         SettingsSection(title = "About") {
             SettingsClickableRow(
                 icon = Icons.Default.Info,
                 title = "Version",
                 value = appVersionName
+            )
+            SettingsClickableRow(
+                icon = Icons.Default.PrivacyTip,
+                title = "Privacy Policy",
+                value = "",
+                onClick = {
+                    try {
+                        val intent = Intent(Intent.ACTION_VIEW, PRIVACY_POLICY_URL.toUri())
+                        context.startActivity(intent)
+                    } catch (_: ActivityNotFoundException) {
+                        // Gracefully ignore if no browser/activity available to handle URL
+                    }
+                }
             )
             Surface(
                 modifier = Modifier
