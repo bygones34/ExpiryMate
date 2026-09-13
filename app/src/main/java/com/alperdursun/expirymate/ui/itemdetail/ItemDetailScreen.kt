@@ -25,7 +25,6 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Inventory2
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -61,6 +60,7 @@ import com.alperdursun.expirymate.ExpiryMateApplication
 import com.alperdursun.expirymate.domain.model.Item
 import com.alperdursun.expirymate.domain.model.ItemStatus
 import com.alperdursun.expirymate.util.DateUtils
+import com.alperdursun.expirymate.util.icon
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -219,7 +219,7 @@ private fun ItemDetailContent(
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
-                            imageVector = Icons.Default.Inventory2,
+                            imageVector = item.category.icon,
                             contentDescription = null,
                             tint = if (isExpired && item.status == ItemStatus.ACTIVE) MaterialTheme.colorScheme.onErrorContainer
                             else MaterialTheme.colorScheme.onPrimaryContainer,

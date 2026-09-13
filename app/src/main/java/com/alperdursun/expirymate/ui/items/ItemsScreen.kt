@@ -57,6 +57,7 @@ import com.alperdursun.expirymate.ExpiryMateApplication
 import com.alperdursun.expirymate.domain.model.Item
 import com.alperdursun.expirymate.domain.model.ItemCategory
 import com.alperdursun.expirymate.util.DateUtils
+import com.alperdursun.expirymate.util.icon
 
 @Composable
 fun ItemsScreen(
@@ -252,7 +253,7 @@ private fun ItemCard(
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    imageVector = Icons.Default.Inventory2,
+                    imageVector = item.category.icon,
                     contentDescription = null,
                     tint = if (isExpired) MaterialTheme.colorScheme.onErrorContainer
                     else MaterialTheme.colorScheme.onPrimaryContainer,

@@ -16,8 +16,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -41,6 +39,7 @@ import com.alperdursun.expirymate.ExpiryMateApplication
 import com.alperdursun.expirymate.domain.model.Item
 import com.alperdursun.expirymate.domain.model.ItemStatus
 import com.alperdursun.expirymate.util.DateUtils
+import com.alperdursun.expirymate.util.icon
 
 @Composable
 fun HistoryScreen(
@@ -155,7 +154,7 @@ private fun HistoryItemCard(
                 else MaterialTheme.colorScheme.errorContainer
             ) {
                 Icon(
-                    imageVector = if (isUsed) Icons.Default.Check else Icons.Default.DeleteOutline,
+                    imageVector = item.category.icon,
                     contentDescription = null,
                     tint = if (isUsed) MaterialTheme.colorScheme.onPrimaryContainer
                     else MaterialTheme.colorScheme.onErrorContainer,
