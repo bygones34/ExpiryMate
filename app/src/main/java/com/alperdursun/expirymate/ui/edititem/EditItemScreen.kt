@@ -1,6 +1,7 @@
 package com.alperdursun.expirymate.ui.edititem
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -15,6 +16,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -49,8 +52,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -87,6 +94,7 @@ fun EditItemScreen(
         }
     )
 ) {
+    val focusManager = LocalFocusManager.current
     val formState by viewModel.formState.collectAsStateWithLifecycle()
     var showDatePickerDialog by remember { mutableStateOf(value = false) }
 
@@ -108,7 +116,10 @@ fun EditItemScreen(
                     )
                 },
                 navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
+                    IconButton(onClick = {
+                        focusManager.clearFocus()
+                        onNavigateBack()
+                    }) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Navigate Back"
@@ -125,6 +136,9 @@ fun EditItemScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
+                .pointerInput(Unit) {
+                    detectTapGestures(onTap = { focusManager.clearFocus() })
+                }
                 .verticalScroll(rememberScrollState())
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(20.dp)
@@ -175,6 +189,8 @@ fun EditItemScreen(
                         placeholder = { Text("e.g. Fresh Organic Milk, Paracetamol") },
                         isError = formState.nameError != null,
                         supportingText = formState.nameError?.let { { Text(it) } },
+                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+                        keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) }),
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
                         shape = RoundedCornerShape(12.dp)
@@ -191,7 +207,10 @@ fun EditItemScreen(
                             isError = formState.dateError != null,
                             supportingText = formState.dateError?.let { { Text(it) } },
                             trailingIcon = {
-                                IconButton(onClick = { showDatePickerDialog = true }) {
+                                IconButton(onClick = {
+                                    focusManager.clearFocus()
+                                    showDatePickerDialog = true
+                                }) {
                                     Icon(
                                         imageVector = Icons.Default.CalendarMonth,
                                         contentDescription = "Select Date"
@@ -205,7 +224,10 @@ fun EditItemScreen(
                         Box(
                             modifier = Modifier
                                 .matchParentSize()
-                                .clickable { showDatePickerDialog = true }
+                                .clickable {
+                                    focusManager.clearFocus()
+                                    showDatePickerDialog = true
+                                }
                         )
                     }
                 }
@@ -255,7 +277,10 @@ fun EditItemScreen(
                             ItemCategory.entries.forEach { category ->
                                 FilterChip(
                                     selected = category == formState.category,
-                                    onClick = { viewModel.onCategorySelected(category) },
+                                    onClick = {
+                                        focusManager.clearFocus()
+                                        viewModel.onCategorySelected(category)
+                                    },
                                     label = { Text(category.displayName) },
                                     shape = RoundedCornerShape(10.dp),
                                     colors = FilterChipDefaults.filterChipColors(
@@ -293,7 +318,10 @@ fun EditItemScreen(
                             reminderOptions.forEach { (days, label) ->
                                 FilterChip(
                                     selected = days == formState.reminderDaysBefore,
-                                    onClick = { viewModel.onReminderDaysSelected(days) },
+                                    onClick = {
+                                        focusManager.clearFocus()
+                                        viewModel.onReminderDaysSelected(days)
+                                    },
                                     label = { Text(label) },
                                     shape = RoundedCornerShape(10.dp)
                                 )
@@ -307,6 +335,8 @@ fun EditItemScreen(
                         onValueChange = viewModel::onNotesChanged,
                         label = { Text("Notes (Optional)") },
                         placeholder = { Text("Add storage location, quantity, or extra details...") },
+                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                        keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
                         modifier = Modifier.fillMaxWidth(),
                         minLines = 3,
                         maxLines = 5,
@@ -317,7 +347,10 @@ fun EditItemScreen(
 
             // Save Changes Button
             Button(
-                onClick = viewModel::saveItem,
+                onClick = {
+                    focusManager.clearFocus()
+                    viewModel.saveItem()
+                },
                 enabled = !formState.isSaving,
                 modifier = Modifier
                     .fillMaxWidth()
