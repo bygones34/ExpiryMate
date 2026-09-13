@@ -23,6 +23,7 @@ import androidx.compose.material.icons.filled.Alarm
 import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.Inventory2
 import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -53,9 +54,13 @@ fun HomeScreen(
     onAddNewItemClick: () -> Unit = {},
     onItemClick: (Long) -> Unit = {},
     viewModel: HomeViewModel = viewModel(
-        factory = HomeViewModel.Factory(
-            (LocalContext.current.applicationContext as ExpiryMateApplication).container.itemRepository
-        )
+        factory = run {
+            val appContainer = (LocalContext.current.applicationContext as ExpiryMateApplication).container
+            HomeViewModel.Factory(
+                itemRepository = appContainer.itemRepository,
+                settingsRepository = appContainer.settingsRepository,
+            )
+        }
     )
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -67,8 +72,6 @@ fun HomeScreen(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
-        GreetingHeader()
-
         ExpirationSummarySection(
             expiredCount = uiState.expiredCount,
             thisWeekCount = uiState.thisWeekCount,
@@ -87,32 +90,29 @@ fun HomeScreen(
 
         QuickAddCard(onAddNewItemClick = onAddNewItemClick)
     }
-}
 
-@Composable
-private fun GreetingHeader() {
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(20.dp),
-        color = MaterialTheme.colorScheme.primaryContainer,
-        tonalElevation = 2.dp
-    ) {
-        Column(
-            modifier = Modifier.padding(20.dp)
-        ) {
-            Text(
-                text = "Welcome to ExpiryMate 👋",
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onPrimaryContainer
-            )
-            Spacer(modifier = Modifier.height(6.dp))
-            Text(
-                text = "Track expiration dates • Get reminded • Waste less",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
-            )
-        }
+    if (!uiState.hasSeenWelcome && !uiState.isLoading) {
+        AlertDialog(
+            onDismissRequest = {},
+            title = {
+                Text(
+                    text = "Welcome to ExpiryMate 👋",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold
+                )
+            },
+            text = {
+                Text(
+                    text = "Track expiration dates. Get reminded. Waste less.",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            },
+            confirmButton = {
+                Button(onClick = viewModel::onWelcomeDismissed) {
+                    Text("Get Started")
+                }
+            }
+        )
     }
 }
 

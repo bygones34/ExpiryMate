@@ -8,6 +8,7 @@ import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -38,6 +39,7 @@ class SettingsRepositoryTest {
         assertEquals(1, repository.defaultReminderDays.first())
         assertEquals(AppThemeMode.SYSTEM, repository.themeMode.first())
         assertTrue(repository.isDynamicColorsEnabled.first())
+        assertFalse(repository.hasSeenWelcome.first())
     }
 
     @Test
@@ -68,5 +70,15 @@ class SettingsRepositoryTest {
 
         repository.setDynamicColorsEnabled(false)
         assertEquals(false, repository.isDynamicColorsEnabled.first())
+    }
+
+    @Test
+    fun testUpdateHasSeenWelcome() = runTest(testDispatcher) {
+        val repository = createRepository()
+
+        assertFalse(repository.hasSeenWelcome.first())
+
+        repository.setHasSeenWelcome(true)
+        assertTrue(repository.hasSeenWelcome.first())
     }
 }

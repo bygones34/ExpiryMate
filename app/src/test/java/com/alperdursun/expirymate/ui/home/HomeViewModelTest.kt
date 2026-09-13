@@ -1,7 +1,9 @@
 package com.alperdursun.expirymate.ui.home
 
+import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import com.alperdursun.expirymate.data.local.ItemDao
 import com.alperdursun.expirymate.data.repository.ItemRepository
+import com.alperdursun.expirymate.data.repository.SettingsRepository
 import com.alperdursun.expirymate.domain.model.Item
 import com.alperdursun.expirymate.domain.model.ItemCategory
 import com.alperdursun.expirymate.domain.model.ItemStatus
@@ -11,6 +13,9 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.TestCoroutineScheduler
+import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
@@ -18,13 +23,26 @@ import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
+import org.junit.rules.TemporaryFolder
 import java.time.LocalDate
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class HomeViewModelTest {
 
+    @get:Rule
+    val tmpFolder: TemporaryFolder = TemporaryFolder.builder().assureDeletion().build()
+
     private val testDispatcher = StandardTestDispatcher()
+
+    private fun createSettingsRepository(testScheduler: TestCoroutineScheduler): SettingsRepository {
+        val testDataStore = PreferenceDataStoreFactory.create(
+            scope = TestScope(UnconfinedTestDispatcher(testScheduler)),
+            produceFile = { tmpFolder.newFile("test_settings_${System.nanoTime()}.preferences_pb") }
+        )
+        return SettingsRepository(testDataStore)
+    }
 
     @Before
     fun setUp() {
@@ -61,11 +79,12 @@ class HomeViewModelTest {
         }
 
         val repository = ItemRepository(fakeDao)
-        val viewModel = HomeViewModel(repository)
+        val settingsRepository = createSettingsRepository(testScheduler)
+        val viewModel = HomeViewModel(repository, settingsRepository)
 
         var latestState: HomeUiState? = null
 
-        backgroundScope.launch {
+        val collectJob = launch(UnconfinedTestDispatcher(testScheduler)) {
             viewModel.uiState.collect { state ->
                 latestState = state
             }
@@ -90,5 +109,44 @@ class HomeViewModelTest {
         assertEquals(todayItem.id, expiringSoon[0].id)
         assertEquals(in3DaysItem.id, expiringSoon[1].id)
         assertEquals(in5DaysItem.id, expiringSoon[2].id)
+
+        collectJob.cancel()
+    }
+
+    @Test
+    fun testWelcomeDialogDismissalPersistsInSettings() = runTest {
+        val fakeDao = object : ItemDao {
+            override fun observeActiveItems(): Flow<List<Item>> = flowOf(emptyList())
+            override fun observeHistoryItems(): Flow<List<Item>> = flowOf(emptyList())
+            override fun observeItemById(id: Long): Flow<Item?> = flowOf(null)
+            override suspend fun getItemById(id: Long): Item? = null
+            override suspend fun insertItem(item: Item): Long = 0L
+            override suspend fun updateItem(item: Item) {}
+            override suspend fun updateItemStatus(id: Long, status: ItemStatus, completedAtTimestamp: Long?) {}
+            override suspend fun deleteItem(id: Long) {}
+        }
+
+        val repository = ItemRepository(fakeDao)
+        val settingsRepository = createSettingsRepository(testScheduler)
+        val viewModel = HomeViewModel(repository, settingsRepository)
+
+        var latestState: HomeUiState? = null
+
+        val collectJob = launch(UnconfinedTestDispatcher(testScheduler)) {
+            viewModel.uiState.collect { state ->
+                latestState = state
+            }
+        }
+
+        testScheduler.advanceUntilIdle()
+
+        assertEquals(false, latestState?.hasSeenWelcome)
+
+        viewModel.onWelcomeDismissed()
+        testScheduler.advanceUntilIdle()
+
+        assertEquals(true, latestState?.hasSeenWelcome)
+
+        collectJob.cancel()
     }
 }

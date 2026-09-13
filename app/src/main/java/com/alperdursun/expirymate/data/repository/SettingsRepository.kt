@@ -20,6 +20,7 @@ class SettingsRepository(private val dataStore: DataStore<Preferences>) {
         val KEY_DEFAULT_REMINDER_DAYS = intPreferencesKey("default_reminder_days")
         val KEY_THEME_MODE = stringPreferencesKey("theme_mode")
         val KEY_DYNAMIC_COLORS_ENABLED = booleanPreferencesKey("dynamic_colors_enabled")
+        val KEY_HAS_SEEN_WELCOME = booleanPreferencesKey("has_seen_welcome")
     }
 
     val isRemindersEnabled: Flow<Boolean> = dataStore.data
@@ -70,6 +71,18 @@ class SettingsRepository(private val dataStore: DataStore<Preferences>) {
             preferences[KEY_DYNAMIC_COLORS_ENABLED] ?: true
         }
 
+    val hasSeenWelcome: Flow<Boolean> = dataStore.data
+        .catch { exception ->
+            if (exception is IOException) {
+                emit(emptyPreferences())
+            } else {
+                throw exception
+            }
+        }
+        .map { preferences ->
+            preferences[KEY_HAS_SEEN_WELCOME] ?: false
+        }
+
     suspend fun setRemindersEnabled(enabled: Boolean) {
         dataStore.edit { preferences ->
             preferences[KEY_EXPIRATION_REMINDERS_ENABLED] = enabled
@@ -91,6 +104,12 @@ class SettingsRepository(private val dataStore: DataStore<Preferences>) {
     suspend fun setDynamicColorsEnabled(enabled: Boolean) {
         dataStore.edit { preferences ->
             preferences[KEY_DYNAMIC_COLORS_ENABLED] = enabled
+        }
+    }
+
+    suspend fun setHasSeenWelcome(hasSeen: Boolean = true) {
+        dataStore.edit { preferences ->
+            preferences[KEY_HAS_SEEN_WELCOME] = hasSeen
         }
     }
 }
