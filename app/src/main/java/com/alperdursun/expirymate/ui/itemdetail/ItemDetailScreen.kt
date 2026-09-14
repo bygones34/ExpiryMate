@@ -1,6 +1,7 @@
 package com.alperdursun.expirymate.ui.itemdetail
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -27,10 +28,7 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -61,9 +59,16 @@ import com.alperdursun.expirymate.R
 import com.alperdursun.expirymate.domain.model.Item
 import com.alperdursun.expirymate.domain.model.ItemStatus
 import com.alperdursun.expirymate.ui.components.CategoryBadge
+import com.alperdursun.expirymate.ui.components.ExpiryMateCard
+import com.alperdursun.expirymate.ui.components.ExpiryUrgencyBadge
+import com.alperdursun.expirymate.ui.components.PrimaryActionButton
 import com.alperdursun.expirymate.ui.components.StatusBadge
+import com.alperdursun.expirymate.ui.theme.ExpiryMateRadius
+import com.alperdursun.expirymate.ui.theme.ExpiryMateSpacing
 import com.alperdursun.expirymate.util.DateUtils
+import com.alperdursun.expirymate.util.containerColor
 import com.alperdursun.expirymate.util.icon
+import com.alperdursun.expirymate.util.onContainerColor
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -93,7 +98,7 @@ fun ItemDetailScreen(
                 title = {
                     Text(
                         text = stringResource(R.string.item_detail_title),
-                        style = MaterialTheme.typography.titleLarge,
+                        style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
                 },
@@ -191,55 +196,50 @@ fun ItemDetailScreen(
 private fun ItemDetailContent(
     item: Item,
     onMarkAsUsed: () -> Unit,
-    onMarkAsDiscarded: () -> Unit
+    onMarkAsDiscarded: () -> Unit,
+    darkTheme: Boolean = isSystemInDarkTheme()
 ) {
     val context = LocalContext.current
-    val isExpired = DateUtils.isExpired(item.expirationDate)
+    val categoryContainer = item.category.containerColor(darkTheme)
+    val categoryOnContainer = item.category.onContainerColor(darkTheme)
+    val urgency = DateUtils.getExpiryUrgency(item.expirationDate)
+    val relativeText = DateUtils.getRelativeExpiryText(context, item.expirationDate)
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+            .padding(horizontal = ExpiryMateSpacing.L, vertical = ExpiryMateSpacing.M),
+        verticalArrangement = Arrangement.spacedBy(ExpiryMateSpacing.M)
     ) {
         // Header Card
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(20.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-        ) {
-            Column(modifier = Modifier.padding(20.dp)) {
+        ExpiryMateCard(modifier = Modifier.fillMaxWidth()) {
+            Column(modifier = Modifier.padding(ExpiryMateSpacing.M)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Box(
                         modifier = Modifier
-                            .size(52.dp)
-                            .clip(RoundedCornerShape(14.dp))
-                            .background(
-                                if (isExpired && item.status == ItemStatus.ACTIVE) MaterialTheme.colorScheme.errorContainer
-                                else MaterialTheme.colorScheme.primaryContainer
-                            ),
+                            .size(48.dp)
+                            .clip(RoundedCornerShape(ExpiryMateRadius.Medium))
+                            .background(categoryContainer),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             imageVector = item.category.icon,
                             contentDescription = null,
-                            tint = if (isExpired && item.status == ItemStatus.ACTIVE) MaterialTheme.colorScheme.onErrorContainer
-                            else MaterialTheme.colorScheme.onPrimaryContainer,
-                            modifier = Modifier.size(26.dp)
+                            tint = categoryOnContainer,
+                            modifier = Modifier.size(24.dp)
                         )
                     }
-                    Spacer(modifier = Modifier.width(16.dp))
+                    Spacer(modifier = Modifier.width(ExpiryMateSpacing.M))
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
                             text = item.name,
-                            style = MaterialTheme.typography.headlineSmall,
+                            style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurface
                         )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Spacer(modifier = Modifier.height(ExpiryMateSpacing.XS))
+                        Row(horizontalArrangement = Arrangement.spacedBy(ExpiryMateSpacing.S)) {
                             CategoryBadge(category = item.category)
                             StatusBadge(status = item.status)
                         }
@@ -253,7 +253,13 @@ private fun ItemDetailContent(
             DetailInfoRow(
                 icon = Icons.Default.CalendarMonth,
                 label = stringResource(R.string.label_expiration_date),
-                value = "${DateUtils.formatDate(item.expirationDate)} (${DateUtils.getRelativeExpiryText(context, item.expirationDate)})"
+                value = DateUtils.formatDate(item.expirationDate),
+                trailingBadge = {
+                    ExpiryUrgencyBadge(
+                        urgency = urgency,
+                        text = relativeText
+                    )
+                }
             )
             val reminderNoticeText = when (item.reminderDaysBefore) {
                 0 -> stringResource(R.string.reminder_same_day)
@@ -284,52 +290,44 @@ private fun ItemDetailContent(
         if (item.status == ItemStatus.ACTIVE) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                horizontalArrangement = Arrangement.spacedBy(ExpiryMateSpacing.M)
             ) {
-                Button(
+                PrimaryActionButton(
+                    text = stringResource(R.string.items_action_mark_used),
                     onClick = onMarkAsUsed,
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(48.dp),
-                    shape = RoundedCornerShape(12.dp)
-                ) {
-                    Icon(imageVector = Icons.Default.Check, contentDescription = null, modifier = Modifier.size(18.dp))
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(stringResource(R.string.items_action_mark_used))
-                }
+                    icon = Icons.Default.Check,
+                    modifier = Modifier.weight(1f)
+                )
                 OutlinedButton(
                     onClick = onMarkAsDiscarded,
                     modifier = Modifier
                         .weight(1f)
-                        .height(48.dp),
-                    shape = RoundedCornerShape(12.dp),
+                        .height(52.dp),
+                    shape = RoundedCornerShape(ExpiryMateRadius.Medium),
                     colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error)
                 ) {
                     Icon(imageVector = Icons.Default.DeleteOutline, contentDescription = null, modifier = Modifier.size(18.dp))
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text(stringResource(R.string.items_action_mark_discarded))
+                    Text(
+                        text = stringResource(R.string.items_action_mark_discarded),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
             }
         }
     }
 }
 
-
-
 @Composable
 private fun DetailSectionCard(
     title: String,
     content: @Composable ColumnScope.() -> Unit
 ) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-    ) {
+    ExpiryMateCard(modifier = Modifier.fillMaxWidth()) {
         Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            modifier = Modifier.padding(ExpiryMateSpacing.M),
+            verticalArrangement = Arrangement.spacedBy(ExpiryMateSpacing.M)
         ) {
             Text(
                 text = title,
@@ -346,7 +344,8 @@ private fun DetailSectionCard(
 private fun DetailInfoRow(
     icon: ImageVector,
     label: String,
-    value: String
+    value: String,
+    trailingBadge: (@Composable () -> Unit)? = null
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -358,7 +357,7 @@ private fun DetailInfoRow(
             tint = MaterialTheme.colorScheme.outline,
             modifier = Modifier.size(20.dp)
         )
-        Spacer(modifier = Modifier.width(12.dp))
+        Spacer(modifier = Modifier.width(ExpiryMateSpacing.M))
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = label,
@@ -371,6 +370,10 @@ private fun DetailInfoRow(
                 color = MaterialTheme.colorScheme.onSurface
             )
         }
+        if (trailingBadge != null) {
+            Spacer(modifier = Modifier.width(ExpiryMateSpacing.S))
+            trailingBadge()
+        }
     }
 }
 
@@ -379,7 +382,7 @@ private fun ItemNotFoundState(onNavigateBack: () -> Unit) {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .padding(32.dp),
+            .padding(ExpiryMateSpacing.XXL),
         contentAlignment = Alignment.Center
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -387,24 +390,25 @@ private fun ItemNotFoundState(onNavigateBack: () -> Unit) {
                 imageVector = Icons.Default.Info,
                 contentDescription = null,
                 modifier = Modifier.size(64.dp),
-                tint = MaterialTheme.colorScheme.outline
+                tint = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
             )
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(ExpiryMateSpacing.L))
             Text(
                 text = stringResource(R.string.item_detail_not_found_title),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold
             )
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(ExpiryMateSpacing.S))
             Text(
                 text = stringResource(R.string.item_detail_not_found_desc),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.outline
             )
-            Spacer(modifier = Modifier.height(16.dp))
-            Button(onClick = onNavigateBack) {
-                Text(stringResource(R.string.btn_go_back))
-            }
+            Spacer(modifier = Modifier.height(ExpiryMateSpacing.L))
+            PrimaryActionButton(
+                text = stringResource(R.string.btn_go_back),
+                onClick = onNavigateBack
+            )
         }
     }
 }

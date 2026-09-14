@@ -30,9 +30,6 @@ import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Tag
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
@@ -43,6 +40,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -72,8 +70,13 @@ import com.alperdursun.expirymate.ExpiryMateApplication
 import com.alperdursun.expirymate.R
 import com.alperdursun.expirymate.domain.model.Item
 import com.alperdursun.expirymate.domain.model.ItemCategory
+import com.alperdursun.expirymate.ui.components.FormSectionCard
+import com.alperdursun.expirymate.ui.components.PrimaryActionButton
+import com.alperdursun.expirymate.ui.theme.ExpiryMateRadius
+import com.alperdursun.expirymate.ui.theme.ExpiryMateSpacing
 import com.alperdursun.expirymate.util.DateUtils
 import com.alperdursun.expirymate.util.displayNameResId
+import com.alperdursun.expirymate.util.icon
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.first
 import java.time.Instant
@@ -145,7 +148,7 @@ fun AddItemScreen(
                 title = {
                     Text(
                         text = stringResource(R.string.add_item_title),
-                        style = MaterialTheme.typography.titleLarge,
+                        style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
                 },
@@ -174,24 +177,24 @@ fun AddItemScreen(
                     detectTapGestures(onTap = { focusManager.clearFocus() })
                 }
                 .verticalScroll(rememberScrollState())
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(20.dp)
+                .padding(horizontal = ExpiryMateSpacing.L, vertical = ExpiryMateSpacing.M),
+            verticalArrangement = Arrangement.spacedBy(ExpiryMateSpacing.M)
         ) {
-            // Header Info Card
+            // Header Info Banner
             Surface(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
-                color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
+                shape = RoundedCornerShape(ExpiryMateRadius.Medium),
+                color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)
             ) {
                 Row(
-                    modifier = Modifier.padding(14.dp),
+                    modifier = Modifier.padding(horizontal = ExpiryMateSpacing.M, vertical = ExpiryMateSpacing.S),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
                         text = "📌",
-                        style = MaterialTheme.typography.titleMedium
+                        style = MaterialTheme.typography.titleSmall
                     )
-                    Spacer(modifier = Modifier.width(10.dp))
+                    Spacer(modifier = Modifier.width(ExpiryMateSpacing.S))
                     Text(
                         text = stringResource(R.string.add_item_info),
                         style = MaterialTheme.typography.bodySmall,
@@ -201,236 +204,207 @@ fun AddItemScreen(
             }
 
             // Section 1: Required Fields
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surface
-                ),
-                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    Text(
-                        text = stringResource(R.string.section_primary_details),
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
+            FormSectionCard(title = stringResource(R.string.section_primary_details)) {
+                // Product Name Field (Required)
+                OutlinedTextField(
+                    value = formState.productName,
+                    onValueChange = viewModel::onNameChanged,
+                    label = {
+                        Text(
+                            text = stringResource(R.string.label_product_name),
+                            fontWeight = FontWeight.Bold
+                        )
+                    },
+                    placeholder = { Text(stringResource(R.string.placeholder_product_name)) },
+                    isError = formState.nameError != null,
+                    supportingText = formState.nameError?.let { { Text(it) } },
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+                    keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) }),
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    shape = RoundedCornerShape(ExpiryMateRadius.Medium),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+                        unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.15f)
                     )
+                )
 
-                    // Product Name Field (Required)
+                // Expiration Date Field (Required)
+                Box(
+                    modifier = Modifier.fillMaxWidth()
+                ) {
                     OutlinedTextField(
-                        value = formState.productName,
-                        onValueChange = viewModel::onNameChanged,
+                        value = DateUtils.formatDate(formState.expirationDate),
+                        onValueChange = {},
+                        readOnly = true,
                         label = {
                             Text(
-                                text = stringResource(R.string.label_product_name),
+                                text = stringResource(R.string.label_expiration_date),
                                 fontWeight = FontWeight.Bold
                             )
                         },
-                        placeholder = { Text(stringResource(R.string.placeholder_product_name)) },
-                        isError = formState.nameError != null,
-                        supportingText = formState.nameError?.let { { Text(it) } },
-                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
-                        keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) }),
+                        placeholder = { Text(stringResource(R.string.placeholder_expiration_date)) },
+                        isError = formState.dateError != null,
+                        supportingText = formState.dateError?.let { { Text(it) } },
+                        trailingIcon = {
+                            IconButton(onClick = {
+                                focusManager.clearFocus()
+                                showDatePickerDialog = true
+                            }) {
+                                Icon(
+                                    imageVector = Icons.Default.CalendarMonth,
+                                    contentDescription = stringResource(R.string.action_select_date)
+                                )
+                            }
+                        },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
-                        shape = RoundedCornerShape(12.dp)
+                        shape = RoundedCornerShape(ExpiryMateRadius.Medium),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+                            unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.15f)
+                        )
                     )
-
-                    // Expiration Date Field (Required)
                     Box(
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        OutlinedTextField(
-                            value = DateUtils.formatDate(formState.expirationDate),
-                            onValueChange = {},
-                            readOnly = true,
-                            label = {
-                                Text(
-                                    text = stringResource(R.string.label_expiration_date),
-                                    fontWeight = FontWeight.Bold
-                                )
-                            },
-                            placeholder = { Text(stringResource(R.string.placeholder_expiration_date)) },
-                            isError = formState.dateError != null,
-                            supportingText = formState.dateError?.let { { Text(it) } },
-                            trailingIcon = {
-                                IconButton(onClick = {
-                                    focusManager.clearFocus()
-                                    showDatePickerDialog = true
-                                }) {
-                                    Icon(
-                                        imageVector = Icons.Default.CalendarMonth,
-                                        contentDescription = stringResource(R.string.action_select_date)
-                                    )
-                                }
-                            },
-                            modifier = Modifier.fillMaxWidth(),
-                            singleLine = true,
-                            shape = RoundedCornerShape(12.dp)
-                        )
-                        Box(
-                            modifier = Modifier
-                                .matchParentSize()
-                                .clickable {
-                                    focusManager.clearFocus()
-                                    showDatePickerDialog = true
-                                }
-                        )
-                    }
+                        modifier = Modifier
+                            .matchParentSize()
+                            .clickable {
+                                focusManager.clearFocus()
+                                showDatePickerDialog = true
+                            }
+                    )
                 }
             }
 
             // Section 2: Optional Categorization & Reminders
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surface
-                ),
-                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+            FormSectionCard(
+                title = stringResource(R.string.section_category_reminder),
+                titleColor = MaterialTheme.colorScheme.secondary
             ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    Text(
-                        text = stringResource(R.string.section_category_reminder),
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.secondary
-                    )
-
-                    // Category Selection
-                    Column {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                imageVector = Icons.Default.Tag,
-                                contentDescription = null,
-                                modifier = Modifier.size(16.dp),
-                                tint = MaterialTheme.colorScheme.outline
-                            )
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text(
-                                text = stringResource(R.string.label_category),
-                                style = MaterialTheme.typography.labelMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .horizontalScroll(rememberScrollState()),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            ItemCategory.entries.forEach { category ->
-                                FilterChip(
-                                    selected = category == formState.category,
-                                    onClick = {
-                                        focusManager.clearFocus()
-                                        viewModel.onCategorySelected(category)
-                                    },
-                                    label = { Text(stringResource(category.displayNameResId)) },
-                                    shape = RoundedCornerShape(10.dp),
-                                    colors = FilterChipDefaults.filterChipColors(
-                                        selectedContainerColor = MaterialTheme.colorScheme.secondaryContainer,
-                                        selectedLabelColor = MaterialTheme.colorScheme.onSecondaryContainer
+                // Category Selection
+                Column {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Default.Tag,
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp),
+                            tint = MaterialTheme.colorScheme.outline
+                        )
+                        Spacer(modifier = Modifier.width(ExpiryMateSpacing.XS))
+                        Text(
+                            text = stringResource(R.string.label_category),
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(ExpiryMateSpacing.S))
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(ExpiryMateSpacing.S)
+                    ) {
+                        ItemCategory.entries.forEach { category ->
+                            FilterChip(
+                                selected = category == formState.category,
+                                onClick = {
+                                    focusManager.clearFocus()
+                                    viewModel.onCategorySelected(category)
+                                },
+                                label = { Text(stringResource(category.displayNameResId)) },
+                                leadingIcon = {
+                                    Icon(
+                                        imageVector = category.icon,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(16.dp)
                                     )
+                                },
+                                shape = RoundedCornerShape(ExpiryMateRadius.Medium),
+                                colors = FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor = MaterialTheme.colorScheme.secondaryContainer,
+                                    selectedLabelColor = MaterialTheme.colorScheme.onSecondaryContainer
                                 )
-                            }
-                        }
-                    }
-
-                    // Reminder Selection
-                    Column {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                imageVector = Icons.Default.Notifications,
-                                contentDescription = null,
-                                modifier = Modifier.size(16.dp),
-                                tint = MaterialTheme.colorScheme.outline
-                            )
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text(
-                                text = stringResource(R.string.label_reminder_notice),
-                                style = MaterialTheme.typography.labelMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .horizontalScroll(rememberScrollState()),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            reminderOptionDays.forEach { days ->
-                                val labelText = when (days) {
-                                    0 -> stringResource(R.string.reminder_same_day)
-                                    1 -> stringResource(R.string.reminder_1_day_before)
-                                    3 -> stringResource(R.string.reminder_3_days_before)
-                                    7 -> stringResource(R.string.reminder_7_days_before)
-                                    else -> stringResource(R.string.reminder_days_before, days)
-                                }
-                                FilterChip(
-                                    selected = days == formState.reminderDaysBefore,
-                                    onClick = {
-                                        focusManager.clearFocus()
-                                        viewModel.onReminderDaysSelected(days)
-                                    },
-                                    label = { Text(labelText) },
-                                    shape = RoundedCornerShape(10.dp)
-                                )
-                            }
-                        }
                     }
-
-                    // Optional Notes Field
-                    OutlinedTextField(
-                        value = formState.notes,
-                        onValueChange = viewModel::onNotesChanged,
-                        label = { Text(stringResource(R.string.label_notes)) },
-                        placeholder = { Text(stringResource(R.string.placeholder_notes)) },
-                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                        keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
-                        modifier = Modifier.fillMaxWidth(),
-                        minLines = 3,
-                        maxLines = 5,
-                        shape = RoundedCornerShape(12.dp)
-                    )
                 }
+
+                // Reminder Selection
+                Column {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Default.Notifications,
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp),
+                            tint = MaterialTheme.colorScheme.outline
+                        )
+                        Spacer(modifier = Modifier.width(ExpiryMateSpacing.XS))
+                        Text(
+                            text = stringResource(R.string.label_reminder_notice),
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(ExpiryMateSpacing.S))
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(ExpiryMateSpacing.S)
+                    ) {
+                        reminderOptionDays.forEach { days ->
+                            val labelText = when (days) {
+                                0 -> stringResource(R.string.reminder_same_day)
+                                1 -> stringResource(R.string.reminder_1_day_before)
+                                3 -> stringResource(R.string.reminder_3_days_before)
+                                7 -> stringResource(R.string.reminder_7_days_before)
+                                else -> stringResource(R.string.reminder_days_before, days)
+                            }
+                            FilterChip(
+                                selected = days == formState.reminderDaysBefore,
+                                onClick = {
+                                    focusManager.clearFocus()
+                                    viewModel.onReminderDaysSelected(days)
+                                },
+                                label = { Text(labelText) },
+                                shape = RoundedCornerShape(ExpiryMateRadius.Medium)
+                            )
+                        }
+                    }
+                }
+
+                // Optional Notes Field
+                OutlinedTextField(
+                    value = formState.notes,
+                    onValueChange = viewModel::onNotesChanged,
+                    label = { Text(stringResource(R.string.label_notes)) },
+                    placeholder = { Text(stringResource(R.string.placeholder_notes)) },
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                    keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
+                    modifier = Modifier.fillMaxWidth(),
+                    minLines = 3,
+                    maxLines = 5,
+                    shape = RoundedCornerShape(ExpiryMateRadius.Medium),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+                        unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.15f)
+                    )
+                )
             }
 
-            // Save Item Button
-            Button(
+            // Save Item Button CTA
+            PrimaryActionButton(
+                text = if (formState.isSaving) stringResource(R.string.btn_saving_item) else stringResource(R.string.btn_save_item),
                 onClick = {
                     focusManager.clearFocus()
                     viewModel.saveItem()
                 },
                 enabled = !formState.isSaving,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(52.dp),
-                shape = RoundedCornerShape(14.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Check,
-                    contentDescription = null,
-                    modifier = Modifier.size(20.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = if (formState.isSaving) stringResource(R.string.btn_saving_item) else stringResource(R.string.btn_save_item),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
-                )
-            }
+                isLoading = formState.isSaving,
+                icon = Icons.Default.Check
+            )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(ExpiryMateSpacing.S))
         }
     }
 
