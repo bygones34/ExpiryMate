@@ -1,87 +1,141 @@
+<div align="center">
+
+<img src="docs/store-assets/expirymate_play_store_icon_512.png" width="120" alt="ExpiryMate App Icon">
+
 # ExpiryMate
 
-**Track expiration dates. Get reminded. Waste less.**
+### Track expiration dates. Get reminded. Waste less.
 
-ExpiryMate is a local-first Android app for tracking expiration dates of everyday products such as food, medicine, cosmetics, supplements, and household items.
+A local-first Android app for keeping track of expiration dates across food, medicine, cosmetics, supplements, household products, and more.
 
-It helps you see what is expiring soon, receive reminders before items expire, and keep a simple history of what you used or discarded.
+<br>
+
+![Android](https://img.shields.io/badge/Android-26%2B-3DDC84?logo=android&logoColor=white)
+![Kotlin](https://img.shields.io/badge/Kotlin-2.x-7F52FF?logo=kotlin&logoColor=white)
+![Jetpack Compose](https://img.shields.io/badge/Jetpack%20Compose-Material%203-4285F4?logo=jetpackcompose&logoColor=white)
+![Room](https://img.shields.io/badge/Persistence-Room-1976D2)
+![WorkManager](https://img.shields.io/badge/Reminders-WorkManager-0F9D58)
+![Languages](https://img.shields.io/badge/Languages-English%20%7C%20Türkçe-blue)
+![Privacy](https://img.shields.io/badge/Privacy-Local--First-success)
+
+<br>
+
+<img src="docs/store-assets/feature_graphic_1024x500.png" width="100%" alt="ExpiryMate Feature Graphic">
+
+</div>
 
 ---
 
-## Features
+## About ExpiryMate
 
-- Track products and expiration dates
-- See items that are expiring soon
-- Receive local expiration reminders
-- Choose reminder timing per item
-- Mark items as **Used** or **Discarded**
-- View item history
-- Search and filter active items by category
-- Edit or delete existing items
-- Light, Dark, and System theme support
-- Material You dynamic colors on supported Android versions
-- Category-specific item icons
-- First-launch welcome experience
-- English and Turkish localization
-- Privacy Policy accessible directly from Settings
+**ExpiryMate** helps you keep track of products before they expire.
+
+Add an item, choose its expiration date and reminder timing, and let ExpiryMate keep the important dates organized for you.
+
+No account. No cloud dependency. No ads. Your item data stays local to your device.
+
+### Highlights
+
+- 📅 Track expiration dates
+- 🔔 Receive local reminders before items expire
+- ⏳ Quickly see what is expiring soon
+- 🗂️ Organize items by category
+- ✅ Mark items as Used or Discarded
+- 🕘 Review item history
+- 🔎 Search and filter your active items
+- 🌗 Light, Dark, and System themes
+- 🎨 Material You dynamic colors on supported devices
+- 🇬🇧 English and 🇹🇷 Turkish localization
 
 ---
 
 ## Screenshots
 
+<div align="center">
+
 | Home | Items | Add Item |
-|---|---|---|
-| ![Home](docs/screenshots/01_home.png) | ![Items](docs/screenshots/02_items.png) | ![Add Item](docs/screenshots/03_add_item.png) |
+|:---:|:---:|:---:|
+| <img src="docs/store-assets/screenshots/01_home.png" width="250"> | <img src="docs/store-assets/screenshots/02_items.png" width="250"> | <img src="docs/store-assets/screenshots/03_add_item.png" width="250"> |
 
 | Item Details | History | Settings |
-|---|---|---|
-| ![Item Details](docs/screenshots/04_item_detail.png) | ![History](docs/screenshots/05_history.png) | ![Settings](docs/screenshots/06_settings.png) |
+|:---:|:---:|:---:|
+| <img src="docs/store-assets/screenshots/04_item_detail.png" width="250"> | <img src="docs/store-assets/screenshots/05_history.png" width="250"> | <img src="docs/store-assets/screenshots/06_settings.png" width="250"> |
 
-> Screenshot paths can be adjusted depending on how store assets are organized in the repository.
+</div>
 
 ---
 
 ## How It Works
 
-1. Add an item with its expiration date.
-2. Choose a category and reminder timing.
-3. ExpiryMate schedules a local reminder.
-4. Check the Home screen to see what needs attention.
-5. Mark the item as Used or Discarded when you're done with it.
-
-No account or cloud service is required.
+1. **Add an item** with its expiration date.
+2. **Choose a category** and reminder timing.
+3. ExpiryMate schedules a **local notification**.
+4. Check the Home screen to see what's expiring next.
+5. Mark the item as **Used** or **Discarded** when you're done.
 
 ---
 
-## Categories
+## Built With
 
-ExpiryMate currently supports:
+| Area | Technology |
+|---|---|
+| Language | Kotlin |
+| UI | Jetpack Compose + Material 3 |
+| Navigation | Navigation Compose |
+| Local Database | Room |
+| Preferences | DataStore |
+| Background Work | WorkManager |
+| Reactive State | Flow / StateFlow |
+| Dependency Injection | Manual `AppContainer` |
+| Notifications | Android Notifications |
+| Code Generation | KSP |
 
-- Food
-- Medicine
-- Cosmetics
-- Supplements
-- Household
-- Other
+### Android
 
-Each category is represented by its own visual icon throughout the app.
+```text
+minSdk     26
+targetSdk  37
+compileSdk 37
+```
 
 ---
 
-## Reminders
+## Architecture
 
-ExpiryMate uses Android local notifications and WorkManager to schedule expiration reminders.
+ExpiryMate keeps its architecture intentionally straightforward:
 
-The reminder time is calculated from the item's expiration date and selected reminder offset.
+```text
+┌──────────────────────┐
+│   Jetpack Compose    │
+│         UI           │
+└──────────┬───────────┘
+           │
+           ▼
+┌──────────────────────┐
+│      ViewModels      │
+│   Flow / StateFlow   │
+└──────────┬───────────┘
+           │
+           ▼
+┌──────────────────────┐
+│   Repository Layer   │
+└──────┬────────┬──────┘
+       │        │
+       ▼        ▼
+    Room     DataStore
+       │
+       └──────────────► WorkManager / Notifications
+```
 
-Examples:
+The current V1 intentionally does **not** use:
 
-- Same day
-- 1 day before
-- 3 days before
-- 7 days before
-
-Notifications are revalidated before delivery so deleted, completed, or ineligible items are not notified unnecessarily.
+- Hilt
+- Firebase
+- Backend APIs
+- Authentication
+- Analytics
+- Advertising SDKs
+- Cloud databases
 
 ---
 
@@ -89,108 +143,24 @@ Notifications are revalidated before delivery so deleted, completed, or ineligib
 
 ExpiryMate is designed as a **local-first** application.
 
-### Current V1 behavior
+Current V1 behavior:
 
 - No account required
 - No backend
 - No cloud sync
 - No analytics
-- No advertising SDKs
+- No ads
 - No tracking
 - No Firebase
 - No developer-controlled data transmission
 
-Item data and settings are stored locally on the device.
+Item data and app preferences are stored locally on the device.
 
-Android system backup may back up application data depending on the user's device and Google backup settings.
+Android system backup may back up application data depending on device and Google backup settings.
 
-Privacy Policy:
+### Privacy Policy
 
-**https://bygones34.github.io/ExpiryMate/privacy-policy.html**
-
----
-
-## Tech Stack
-
-- **Kotlin**
-- **Jetpack Compose**
-- **Material 3**
-- **Navigation Compose**
-- **Room**
-- **KSP**
-- **DataStore Preferences**
-- **WorkManager**
-- **Flow / StateFlow**
-- **Android Notifications**
-- Manual dependency injection through `AppContainer`
-
-### Android configuration
-
-- `minSdk`: 26
-- `targetSdk`: 37
-- `compileSdk`: 37
-
----
-
-## Architecture
-
-ExpiryMate follows a simple layered Android architecture:
-
-```text
-UI / Compose
-     ↓
-ViewModels
-     ↓
-Repository Layer
-     ↓
-Room / DataStore / WorkManager
-```
-
-The project intentionally avoids unnecessary abstraction for the current scope.
-
-There is currently no:
-
-- Hilt
-- Backend API
-- Authentication layer
-- Firebase
-- Analytics SDK
-- Ad SDK
-- Cloud database
-
----
-
-## Data & Persistence
-
-### Room
-
-Room stores expiration-tracking data such as:
-
-- Product name
-- Category
-- Expiration date
-- Reminder timing
-- Notes
-- Item status
-- Completion metadata
-
-Supported item states:
-
-```text
-ACTIVE
-USED
-DISCARDED
-```
-
-### DataStore
-
-Preferences DataStore is used for app-level settings such as:
-
-- Expiration reminder preference
-- Default reminder timing
-- Theme mode
-- Dynamic color preference
-- First-launch welcome state
+[Read the ExpiryMate Privacy Policy](https://bygones34.github.io/ExpiryMate/privacy-policy.html)
 
 ---
 
@@ -198,32 +168,16 @@ Preferences DataStore is used for app-level settings such as:
 
 ExpiryMate currently supports:
 
-- English
-- Turkish
+- 🇬🇧 English
+- 🇹🇷 Turkish
 
-The app automatically follows the Android system locale.
+The app automatically follows the Android system language.
 
-There is no in-app language selector.
-
-Unsupported locales currently fall back to English.
+Unsupported locales fall back to English.
 
 ---
 
-## Themes
-
-ExpiryMate supports:
-
-- System Default
-- Light
-- Dark
-
-Dynamic Material You colors are available on supported Android versions.
-
-The splash screen also provides dedicated light and dark background treatment.
-
----
-
-## Build
+## Build Locally
 
 Clone the repository:
 
@@ -231,8 +185,6 @@ Clone the repository:
 git clone <repository-url>
 cd ExpiryMate
 ```
-
-Build the debug APK:
 
 ### Windows / PowerShell
 
@@ -246,76 +198,65 @@ Build the debug APK:
 ./gradlew :app:assembleDebug
 ```
 
-The debug APK is generated at:
+The generated debug APK can be found at:
 
 ```text
 app/build/outputs/apk/debug/app-debug.apk
 ```
 
-Run unit tests:
+Run the unit tests:
 
-```bash
-./gradlew :app:testDebugUnitTest
+```powershell
+.\gradlew :app:testDebugUnitTest
 ```
 
 ---
 
 ## Project Status
 
-ExpiryMate is currently being prepared for its first Google Play release.
+ExpiryMate is currently being prepared for its **first Google Play release**.
 
-Completed release-readiness work includes:
+### Completed
 
-- Release build verification
-- Room schema export
-- Final launcher icon
-- Dedicated notification small icon
-- Light / dark splash treatment
-- Privacy Policy
-- Play Store listing draft
-- Store screenshots
-- Feature graphic
-- English / Turkish localization
-- Real-device notification testing
+- ✅ Core expiration tracking flow
+- ✅ Room persistence
+- ✅ Local reminder notifications
+- ✅ Item Detail / Edit / Delete
+- ✅ Used / Discarded history
+- ✅ Light / Dark / System themes
+- ✅ Dynamic Colors
+- ✅ Dedicated notification small icon
+- ✅ Light / dark splash treatment
+- ✅ Category-specific icons
+- ✅ First-launch welcome experience
+- ✅ English / Turkish localization
+- ✅ Privacy Policy
+- ✅ Play Store screenshots
+- ✅ Feature graphic
+- ✅ Real-device notification verification
 
-Remaining release work includes:
+### Release Work Remaining
 
-- Google Play Console setup
-- Data Safety form
-- Play App Signing
-- Signed Android App Bundle
-- Internal Testing
-- Pre-launch report review
-- Production release preparation
-
----
-
-## Product Principles
-
-ExpiryMate currently follows a few intentionally simple product decisions:
-
-- Local-first
-- No account requirement
-- No cloud dependency
-- Minimal permissions
-- No ads or analytics in V1
-- Simple reminder workflow
-- Focused feature set
+- ⏳ Google Play Console setup
+- ⏳ Data Safety declaration
+- ⏳ Play App Signing
+- ⏳ Signed Android App Bundle
+- ⏳ Internal Testing
+- ⏳ Pre-launch report
+- ⏳ Production release
 
 ---
 
-## Planned / Postponed Features
+## Future Ideas
 
-Potential future additions include:
+Features intentionally outside the first-release scope include:
 
 - Barcode scanning
 - OCR / camera support
 - Export / import
 - Cloud sync
-- Family sharing
+- Accounts / family sharing
 - Additional languages
-
-These are intentionally outside the scope of the first release.
 
 ---
 
@@ -323,7 +264,7 @@ These are intentionally outside the scope of the first release.
 
 ExpiryMate is currently under active development.
 
-If you find a bug or have a feature suggestion, feel free to open an issue.
+Bug reports and feature suggestions are welcome through GitHub Issues.
 
 ---
 
