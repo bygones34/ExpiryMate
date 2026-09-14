@@ -1,7 +1,7 @@
 package com.alperdursun.expirymate.ui.home
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,22 +14,16 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Alarm
 import androidx.compose.material.icons.filled.ErrorOutline
-import androidx.compose.material.icons.filled.Inventory2
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -42,15 +36,33 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.alperdursun.expirymate.ExpiryMateApplication
 import com.alperdursun.expirymate.R
 import com.alperdursun.expirymate.domain.model.Item
+import com.alperdursun.expirymate.ui.components.CategoryBadge
+import com.alperdursun.expirymate.ui.components.ExpiryMateCard
+import com.alperdursun.expirymate.ui.components.ExpiryMateSectionHeader
+import com.alperdursun.expirymate.ui.components.ExpiryUrgencyBadge
+import com.alperdursun.expirymate.ui.theme.DangerContainerDark
+import com.alperdursun.expirymate.ui.theme.DangerContainerLight
+import com.alperdursun.expirymate.ui.theme.ExpiryMateRadius
+import com.alperdursun.expirymate.ui.theme.ExpiryMateSpacing
+import com.alperdursun.expirymate.ui.theme.OnDangerContainerDark
+import com.alperdursun.expirymate.ui.theme.OnDangerContainerLight
+import com.alperdursun.expirymate.ui.theme.OnSafeContainerDark
+import com.alperdursun.expirymate.ui.theme.OnSafeContainerLight
+import com.alperdursun.expirymate.ui.theme.OnWarningContainerDark
+import com.alperdursun.expirymate.ui.theme.OnWarningContainerLight
+import com.alperdursun.expirymate.ui.theme.SafeContainerDark
+import com.alperdursun.expirymate.ui.theme.SafeContainerLight
+import com.alperdursun.expirymate.ui.theme.WarningContainerDark
+import com.alperdursun.expirymate.ui.theme.WarningContainerLight
 import com.alperdursun.expirymate.util.DateUtils
-import com.alperdursun.expirymate.util.displayNameResId
+import com.alperdursun.expirymate.util.containerColor
 import com.alperdursun.expirymate.util.icon
+import com.alperdursun.expirymate.util.onContainerColor
 
 @Composable
 fun HomeScreen(
@@ -73,8 +85,8 @@ fun HomeScreen(
         modifier = modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(20.dp)
+            .padding(ExpiryMateSpacing.L),
+        verticalArrangement = Arrangement.spacedBy(ExpiryMateSpacing.XL)
     ) {
         ExpirationSummarySection(
             expiredCount = uiState.expiredCount,
@@ -91,8 +103,6 @@ fun HomeScreen(
             items = uiState.expiringSoonItems,
             onItemClick = onItemClick
         )
-
-        QuickAddCard(onAddNewItemClick = onAddNewItemClick)
     }
 
     if (!uiState.hasSeenWelcome && !uiState.isLoading) {
@@ -124,42 +134,38 @@ fun HomeScreen(
 private fun ExpirationSummarySection(
     expiredCount: Int,
     thisWeekCount: Int,
-    laterCount: Int
+    laterCount: Int,
+    darkTheme: Boolean = isSystemInDarkTheme()
 ) {
     Column {
-        Text(
-            text = stringResource(R.string.home_overview),
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.onBackground
-        )
-        Spacer(modifier = Modifier.height(10.dp))
+        ExpiryMateSectionHeader(title = stringResource(R.string.home_overview))
+        Spacer(modifier = Modifier.height(ExpiryMateSpacing.S))
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
+            horizontalArrangement = Arrangement.spacedBy(ExpiryMateSpacing.S)
         ) {
             SummaryCard(
                 title = stringResource(R.string.home_expired),
                 count = expiredCount.toString(),
                 icon = Icons.Default.ErrorOutline,
-                containerColor = MaterialTheme.colorScheme.errorContainer,
-                contentColor = MaterialTheme.colorScheme.onErrorContainer,
+                containerColor = if (darkTheme) DangerContainerDark else DangerContainerLight,
+                contentColor = if (darkTheme) OnDangerContainerDark else OnDangerContainerLight,
                 modifier = Modifier.weight(1f)
             )
             SummaryCard(
                 title = stringResource(R.string.home_this_week),
                 count = thisWeekCount.toString(),
                 icon = Icons.Default.Alarm,
-                containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
+                containerColor = if (darkTheme) WarningContainerDark else WarningContainerLight,
+                contentColor = if (darkTheme) OnWarningContainerDark else OnWarningContainerLight,
                 modifier = Modifier.weight(1f)
             )
             SummaryCard(
                 title = stringResource(R.string.home_later),
                 count = laterCount.toString(),
                 icon = Icons.Default.Schedule,
-                containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                containerColor = if (darkTheme) SafeContainerDark else SafeContainerLight,
+                contentColor = if (darkTheme) OnSafeContainerDark else OnSafeContainerLight,
                 modifier = Modifier.weight(1f)
             )
         }
@@ -175,14 +181,13 @@ private fun SummaryCard(
     contentColor: Color,
     modifier: Modifier = Modifier
 ) {
-    Card(
-        modifier = modifier,
-        colors = CardDefaults.cardColors(containerColor = containerColor),
-        shape = RoundedCornerShape(16.dp)
+    ExpiryMateCard(
+        modifier = modifier
     ) {
         Column(
             modifier = Modifier
-                .padding(12.dp)
+                .background(containerColor)
+                .padding(ExpiryMateSpacing.M)
                 .fillMaxWidth(),
             horizontalAlignment = Alignment.Start
         ) {
@@ -192,7 +197,7 @@ private fun SummaryCard(
                 tint = contentColor,
                 modifier = Modifier.size(20.dp)
             )
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(ExpiryMateSpacing.S))
             Text(
                 text = count,
                 style = MaterialTheme.typography.headlineMedium,
@@ -202,7 +207,8 @@ private fun SummaryCard(
             Text(
                 text = title,
                 style = MaterialTheme.typography.labelMedium,
-                color = contentColor.copy(alpha = 0.8f)
+                color = contentColor.copy(alpha = 0.85f),
+                maxLines = 1
             )
         }
     }
@@ -211,100 +217,72 @@ private fun SummaryCard(
 @Composable
 private fun NextToExpireSection(
     nextItem: Item?,
-    onItemClick: (Long) -> Unit
+    onItemClick: (Long) -> Unit,
+    darkTheme: Boolean = isSystemInDarkTheme()
 ) {
     val context = LocalContext.current
 
     Column {
-        Text(
-            text = stringResource(R.string.home_next_to_expire),
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.onBackground
-        )
-        Spacer(modifier = Modifier.height(10.dp))
+        ExpiryMateSectionHeader(title = stringResource(R.string.home_next_to_expire))
+        Spacer(modifier = Modifier.height(ExpiryMateSpacing.S))
 
         if (nextItem == null) {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-                )
-            ) {
+            ExpiryMateCard(modifier = Modifier.fillMaxWidth()) {
                 Text(
                     text = stringResource(R.string.home_no_active_products),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.outline,
-                    modifier = Modifier.padding(16.dp)
+                    modifier = Modifier.padding(ExpiryMateSpacing.L)
                 )
             }
         } else {
-            val isExpired = DateUtils.isExpired(nextItem.expirationDate)
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { onItemClick(nextItem.id) },
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant
-                )
+            val urgency = DateUtils.getExpiryUrgency(nextItem.expirationDate)
+            val relativeText = DateUtils.getRelativeExpiryText(context, nextItem.expirationDate)
+            val categoryContainer = nextItem.category.containerColor(darkTheme)
+            val categoryOnContainer = nextItem.category.onContainerColor(darkTheme)
+
+            ExpiryMateCard(
+                onClick = { onItemClick(nextItem.id) },
+                modifier = Modifier.fillMaxWidth()
             ) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(16.dp),
+                        .padding(ExpiryMateSpacing.L),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Box(
                         modifier = Modifier
                             .size(48.dp)
-                            .clip(CircleShape)
-                            .background(
-                                if (isExpired) MaterialTheme.colorScheme.errorContainer
-                                else MaterialTheme.colorScheme.primaryContainer
-                            ),
+                            .clip(RoundedCornerShape(ExpiryMateRadius.Medium))
+                            .background(categoryContainer),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             imageVector = nextItem.category.icon,
                             contentDescription = null,
-                            tint = if (isExpired) MaterialTheme.colorScheme.onErrorContainer
-                            else MaterialTheme.colorScheme.primary,
+                            tint = categoryOnContainer,
                             modifier = Modifier.size(24.dp)
                         )
                     }
-                    Spacer(modifier = Modifier.width(14.dp))
+                    Spacer(modifier = Modifier.width(ExpiryMateSpacing.M))
                     Column(
                         modifier = Modifier.weight(1f)
                     ) {
                         Text(
                             text = nextItem.name,
-                            style = MaterialTheme.typography.titleSmall,
+                            style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            color = MaterialTheme.colorScheme.onSurface
                         )
-                        Spacer(modifier = Modifier.height(2.dp))
-                        Text(
-                            text = stringResource(R.string.history_category_format, stringResource(nextItem.category.displayNameResId)),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
-                        )
+                        Spacer(modifier = Modifier.height(ExpiryMateSpacing.XS))
+                        CategoryBadge(category = nextItem.category)
                     }
-                    Surface(
-                        shape = RoundedCornerShape(20.dp),
-                        color = if (isExpired) MaterialTheme.colorScheme.errorContainer
-                        else MaterialTheme.colorScheme.tertiaryContainer
-                    ) {
-                        Text(
-                            text = DateUtils.getRelativeExpiryText(context, nextItem.expirationDate),
-                            style = MaterialTheme.typography.labelSmall,
-                            fontWeight = FontWeight.Bold,
-                            color = if (isExpired) MaterialTheme.colorScheme.onErrorContainer
-                            else MaterialTheme.colorScheme.onTertiaryContainer,
-                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
-                        )
-                    }
+                    Spacer(modifier = Modifier.width(ExpiryMateSpacing.S))
+                    ExpiryUrgencyBadge(
+                        urgency = urgency,
+                        text = relativeText
+                    )
                 }
             }
         }
@@ -317,48 +295,37 @@ private fun ExpiringSoonSection(
     onItemClick: (Long) -> Unit
 ) {
     Column {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = stringResource(R.string.home_expiring_soon),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onBackground
-            )
-            if (items.isNotEmpty()) {
-                val countText = if (items.size == 1) {
-                    stringResource(R.string.home_item_count, items.size)
-                } else {
-                    stringResource(R.string.home_items_count, items.size)
+        ExpiryMateSectionHeader(
+            title = stringResource(R.string.home_expiring_soon),
+            trailingContent = {
+                if (items.isNotEmpty()) {
+                    val countText = if (items.size == 1) {
+                        stringResource(R.string.home_item_count, items.size)
+                    } else {
+                        stringResource(R.string.home_items_count, items.size)
+                    }
+                    Text(
+                        text = countText,
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.outline
+                    )
                 }
-                Text(
-                    text = countText,
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.outline
-                )
             }
-        }
-        Spacer(modifier = Modifier.height(10.dp))
+        )
+        Spacer(modifier = Modifier.height(ExpiryMateSpacing.S))
 
         if (items.isEmpty()) {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
-            ) {
+            ExpiryMateCard(modifier = Modifier.fillMaxWidth()) {
                 Text(
                     text = stringResource(R.string.home_no_expiring_soon),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.outline,
-                    modifier = Modifier.padding(14.dp)
+                    modifier = Modifier.padding(ExpiryMateSpacing.M)
                 )
             }
         } else {
             Column(
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                verticalArrangement = Arrangement.spacedBy(ExpiryMateSpacing.S)
             ) {
                 items.forEach { item ->
                     ItemSummaryCard(
@@ -374,107 +341,57 @@ private fun ExpiringSoonSection(
 @Composable
 private fun ItemSummaryCard(
     item: Item,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    darkTheme: Boolean = isSystemInDarkTheme()
 ) {
     val context = LocalContext.current
-    val isExpired = DateUtils.isExpired(item.expirationDate)
-    val urgencyColor = when {
-        isExpired -> MaterialTheme.colorScheme.error
-        DateUtils.isThisWeek(item.expirationDate) -> MaterialTheme.colorScheme.tertiary
-        else -> MaterialTheme.colorScheme.primary
-    }
+    val urgency = DateUtils.getExpiryUrgency(item.expirationDate)
+    val relativeText = DateUtils.getRelativeExpiryText(context, item.expirationDate)
+    val categoryContainer = item.category.containerColor(darkTheme)
+    val categoryOnContainer = item.category.onContainerColor(darkTheme)
 
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { onClick() },
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+    ExpiryMateCard(
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth()
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(14.dp),
+                .padding(ExpiryMateSpacing.M),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(
                 modifier = Modifier
-                    .size(10.dp)
-                    .clip(CircleShape)
-                    .background(urgencyColor)
-            )
-            Spacer(modifier = Modifier.width(12.dp))
+                    .size(40.dp)
+                    .clip(RoundedCornerShape(ExpiryMateRadius.Small))
+                    .background(categoryContainer),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = item.category.icon,
+                    contentDescription = null,
+                    tint = categoryOnContainer,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+            Spacer(modifier = Modifier.width(ExpiryMateSpacing.M))
             Column(
                 modifier = Modifier.weight(1f)
             ) {
                 Text(
                     text = item.name,
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.SemiBold,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface
                 )
-                Text(
-                    text = stringResource(item.category.displayNameResId),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                )
+                Spacer(modifier = Modifier.height(2.dp))
+                CategoryBadge(category = item.category)
             }
-            Text(
-                text = DateUtils.getRelativeExpiryText(context, item.expirationDate),
-                style = MaterialTheme.typography.bodySmall,
-                color = if (isExpired) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
-                fontSize = 12.sp,
-                fontWeight = if (isExpired) FontWeight.Bold else FontWeight.Normal
+            Spacer(modifier = Modifier.width(ExpiryMateSpacing.S))
+            ExpiryUrgencyBadge(
+                urgency = urgency,
+                text = relativeText
             )
-        }
-    }
-}
-
-@Composable
-private fun QuickAddCard(
-    onAddNewItemClick: () -> Unit
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-        )
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Icon(
-                imageVector = Icons.Default.Inventory2,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(32.dp)
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = stringResource(R.string.home_quick_add_description),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Spacer(modifier = Modifier.height(12.dp))
-            Button(
-                onClick = onAddNewItemClick,
-                shape = RoundedCornerShape(12.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Add,
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp)
-                )
-                Spacer(modifier = Modifier.width(6.dp))
-                Text(text = stringResource(R.string.home_add_product_item))
-            }
         }
     }
 }
