@@ -9,6 +9,12 @@ import java.time.temporal.ChronoUnit
 import java.util.Locale
 import kotlin.math.abs
 
+enum class ExpiryUrgency {
+    EXPIRED,
+    WARNING,
+    SAFE
+}
+
 object DateUtils {
 
     fun getSupportedLocale(systemLocale: Locale = Locale.getDefault()): Locale {
@@ -36,6 +42,14 @@ object DateUtils {
 
     fun isLater(date: LocalDate, today: LocalDate = LocalDate.now()): Boolean {
         return date.isAfter(today.plusDays(7))
+    }
+
+    fun getExpiryUrgency(date: LocalDate, today: LocalDate = LocalDate.now()): ExpiryUrgency {
+        return when {
+            isExpired(date, today) -> ExpiryUrgency.EXPIRED
+            isThisWeek(date, today) -> ExpiryUrgency.WARNING
+            else -> ExpiryUrgency.SAFE
+        }
     }
 
     fun getRelativeExpiryText(date: LocalDate, today: LocalDate = LocalDate.now()): String {

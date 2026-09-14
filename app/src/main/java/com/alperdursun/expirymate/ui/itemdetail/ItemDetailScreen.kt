@@ -38,7 +38,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
@@ -61,8 +60,9 @@ import com.alperdursun.expirymate.ExpiryMateApplication
 import com.alperdursun.expirymate.R
 import com.alperdursun.expirymate.domain.model.Item
 import com.alperdursun.expirymate.domain.model.ItemStatus
+import com.alperdursun.expirymate.ui.components.CategoryBadge
+import com.alperdursun.expirymate.ui.components.StatusBadge
 import com.alperdursun.expirymate.util.DateUtils
-import com.alperdursun.expirymate.util.displayNameResId
 import com.alperdursun.expirymate.util.icon
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -240,17 +240,7 @@ private fun ItemDetailContent(
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Surface(
-                                shape = RoundedCornerShape(8.dp),
-                                color = MaterialTheme.colorScheme.secondaryContainer
-                            ) {
-                                Text(
-                                    text = stringResource(item.category.displayNameResId),
-                                    style = MaterialTheme.typography.labelMedium,
-                                    color = MaterialTheme.colorScheme.onSecondaryContainer,
-                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
-                                )
-                            }
+                            CategoryBadge(category = item.category)
                             StatusBadge(status = item.status)
                         }
                     }
@@ -324,26 +314,7 @@ private fun ItemDetailContent(
     }
 }
 
-@Composable
-private fun StatusBadge(status: ItemStatus) {
-    val (containerColor, contentColor) = when (status) {
-        ItemStatus.ACTIVE -> Pair(MaterialTheme.colorScheme.primaryContainer, MaterialTheme.colorScheme.onPrimaryContainer)
-        ItemStatus.USED -> Pair(MaterialTheme.colorScheme.tertiaryContainer, MaterialTheme.colorScheme.onTertiaryContainer)
-        ItemStatus.DISCARDED -> Pair(MaterialTheme.colorScheme.errorContainer, MaterialTheme.colorScheme.onErrorContainer)
-    }
-    Surface(
-        shape = RoundedCornerShape(8.dp),
-        color = containerColor
-    ) {
-        Text(
-            text = stringResource(status.displayNameResId),
-            style = MaterialTheme.typography.labelMedium,
-            fontWeight = FontWeight.Bold,
-            color = contentColor,
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
-        )
-    }
-}
+
 
 @Composable
 private fun DetailSectionCard(
