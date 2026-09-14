@@ -40,22 +40,20 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.alperdursun.expirymate.ExpiryMateApplication
+import com.alperdursun.expirymate.R
 import com.alperdursun.expirymate.domain.model.AppThemeMode
+import com.alperdursun.expirymate.util.displayNameResId
 
 private const val PRIVACY_POLICY_URL = "https://bygones34.github.io/ExpiryMate/privacy-policy.html"
 
-private val reminderOptions = listOf(
-    0 to "Same day",
-    1 to "1 day before",
-    3 to "3 days before",
-    7 to "7 days before",
-)
+private val reminderOptionDays = listOf(0, 1, 3, 7)
 
 @Composable
 fun SettingsScreen(
@@ -76,7 +74,14 @@ fun SettingsScreen(
     var showDefaultDaysDialog by remember { mutableStateOf(value = false) }
     var showThemeDialog by remember { mutableStateOf(value = false) }
 
-    val defaultReminderText = reminderOptions.find { it.first == uiState.defaultReminderDays }?.second ?: "1 day before"
+    val defaultReminderText = when (uiState.defaultReminderDays) {
+        0 -> stringResource(R.string.reminder_same_day)
+        1 -> stringResource(R.string.reminder_1_day_before)
+        3 -> stringResource(R.string.reminder_3_days_before)
+        7 -> stringResource(R.string.reminder_7_days_before)
+        else -> stringResource(R.string.reminder_days_before, uiState.defaultReminderDays)
+    }
+
     val appVersionName = remember {
         try {
             context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "1.0.0"
@@ -94,56 +99,56 @@ fun SettingsScreen(
     ) {
         // Title
         Text(
-            text = "Settings",
+            text = stringResource(R.string.settings_title),
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onBackground
         )
 
         // Section 1: Notifications
-        SettingsSection(title = "Notifications") {
+        SettingsSection(title = stringResource(R.string.settings_section_notifications)) {
             SettingsSwitchRow(
                 icon = Icons.Default.Notifications,
-                title = "Expiration Reminders",
-                subtitle = "Receive notifications before products expire",
+                title = stringResource(R.string.settings_reminders_title),
+                subtitle = stringResource(R.string.settings_reminders_subtitle),
                 checked = uiState.isRemindersEnabled,
                 onCheckedChange = viewModel::onRemindersEnabledToggled
             )
             SettingsClickableRow(
                 icon = Icons.Default.Notifications,
-                title = "Default Reminder Timing",
+                title = stringResource(R.string.settings_default_reminder_timing),
                 value = defaultReminderText,
                 onClick = { showDefaultDaysDialog = true }
             )
         }
 
         // Section 2: Appearance
-        SettingsSection(title = "Appearance") {
+        SettingsSection(title = stringResource(R.string.settings_section_appearance)) {
             SettingsClickableRow(
                 icon = Icons.Default.Palette,
-                title = "Theme Mode",
-                value = uiState.themeMode.displayName,
+                title = stringResource(R.string.settings_theme_mode),
+                value = stringResource(uiState.themeMode.displayNameResId),
                 onClick = { showThemeDialog = true }
             )
             SettingsSwitchRow(
                 icon = Icons.Default.Palette,
-                title = "Dynamic Colors",
-                subtitle = "Use Material You dynamic color palette",
+                title = stringResource(R.string.settings_dynamic_colors_title),
+                subtitle = stringResource(R.string.settings_dynamic_colors_subtitle),
                 checked = uiState.isDynamicColorsEnabled,
                 onCheckedChange = viewModel::onDynamicColorsToggled
             )
         }
 
         // Section 3: About
-        SettingsSection(title = "About") {
+        SettingsSection(title = stringResource(R.string.settings_section_about)) {
             SettingsClickableRow(
                 icon = Icons.Default.Info,
-                title = "Version",
+                title = stringResource(R.string.settings_version),
                 value = appVersionName
             )
             SettingsClickableRow(
                 icon = Icons.Default.PrivacyTip,
-                title = "Privacy Policy",
+                title = stringResource(R.string.settings_privacy_policy),
                 value = "",
                 onClick = {
                     try {
@@ -154,7 +159,6 @@ fun SettingsScreen(
                     }
                 }
             )
-
         }
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -164,7 +168,7 @@ fun SettingsScreen(
     if (showThemeDialog) {
         AlertDialog(
             onDismissRequest = { showThemeDialog = false },
-            title = { Text("Select Theme") },
+            title = { Text(stringResource(R.string.dialog_select_theme)) },
             text = {
                 Column {
                     AppThemeMode.entries.forEach { mode ->
@@ -186,14 +190,14 @@ fun SettingsScreen(
                                 }
                             )
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text(text = mode.displayName, style = MaterialTheme.typography.bodyMedium)
+                            Text(text = stringResource(mode.displayNameResId), style = MaterialTheme.typography.bodyMedium)
                         }
                     }
                 }
             },
             confirmButton = {
                 TextButton(onClick = { showThemeDialog = false }) {
-                    Text("Close")
+                    Text(stringResource(R.string.btn_close))
                 }
             }
         )
@@ -203,10 +207,17 @@ fun SettingsScreen(
     if (showDefaultDaysDialog) {
         AlertDialog(
             onDismissRequest = { showDefaultDaysDialog = false },
-            title = { Text("Default Reminder Timing") },
+            title = { Text(stringResource(R.string.dialog_default_reminder)) },
             text = {
                 Column {
-                    reminderOptions.forEach { (days, label) ->
+                    reminderOptionDays.forEach { days ->
+                        val labelText = when (days) {
+                            0 -> stringResource(R.string.reminder_same_day)
+                            1 -> stringResource(R.string.reminder_1_day_before)
+                            3 -> stringResource(R.string.reminder_3_days_before)
+                            7 -> stringResource(R.string.reminder_7_days_before)
+                            else -> stringResource(R.string.reminder_days_before, days)
+                        }
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -225,14 +236,14 @@ fun SettingsScreen(
                                 }
                             )
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text(text = label, style = MaterialTheme.typography.bodyMedium)
+                            Text(text = labelText, style = MaterialTheme.typography.bodyMedium)
                         }
                     }
                 }
             },
             confirmButton = {
                 TextButton(onClick = { showDefaultDaysDialog = false }) {
-                    Text("Close")
+                    Text(stringResource(R.string.btn_close))
                 }
             }
         )

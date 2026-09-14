@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">ExpiryMate</string>
+
+    <!-- Bottom Navigation -->
+    <string name="nav_home">Ana Sayfa</string>
+    <string name="nav_items">Ürünler</string>
+    <string name="nav_history">Geçmiş</string>
+    <string name="nav_settings">Ayarlar</string>
+
+    <!-- Categories -->
+    <string name="category_food">Gıda</string>
+    <string name="category_medicine">İlaç</string>
+    <string name="category_cosmetics">Kozmetik</string>
+    <string name="category_supplements">Takviye</string>
+    <string name="category_household">Ev Bakım</string>
+    <string name="category_other">Diğer</string>
+
+    <!-- Item Statuses -->
+    <string name="status_active">Aktif</string>
+    <string name="status_used">Kullanıldı</string>
+    <string name="status_discarded">Atıldı</string>
+
+    <!-- Theme Modes -->
+    <string name="theme_system">Sistem Varsayılanı</string>
+    <string name="theme_light">Açık</string>
+    <string name="theme_dark">Koyu</string>
+
+    <!-- Home Screen -->
+    <string name="home_overview">Genel Bakış</string>
+    <string name="home_expired">Süresi Dolanlar</string>
+    <string name="home_this_week">Bu Hafta</string>
+    <string name="home_later">Daha Sonra</string>
+    <string name="home_next_to_expire">Yakında Dolan İlk Ürün</string>
+    <string name="home_expiring_soon">Son Kullanma Tarihi Yaklaşanlar</string>
+    <string name="home_item_count">%1$d ürün</string>
+    <string name="home_items_count">%1$d ürün</string>
+    <string name="home_no_active_products">Henüz takip edilen ürün yok.</string>
+    <string name="home_no_expiring_soon">Yakında süresi dolacak ürün yok.</string>
+    <string name="home_quick_add_description">Kiler ve ecza dolabınızı düzenli tutun</string>
+    <string name="home_add_product_item">Ürün Ekle</string>
+
+    <!-- Welcome Dialog -->
+    <string name="welcome_title">ExpiryMate\'e Hoş Geldiniz 👋</string>
+    <string name="welcome_message">Son kullanma tarihlerini takip edin. Hatırlatıcılar alın. İsrafı önleyin.</string>
+    <string name="welcome_action">Başlayalım</string>
+
+    <!-- Items Screen -->
+    <string name="items_title">Ürünlerim</string>
+    <string name="items_active_count">%1$d ürün</string>
+    <string name="items_search_placeholder">İsim veya kategori ile ara…</string>
+    <string name="items_filter_all">Tümü</string>
+    <string name="items_empty_title">Henüz Takip Edilen Ürün Yok</string>
+    <string name="items_empty_description">İlk ürününüzü eklemek ve son kullanma tarihlerini takip etmek için \'+\' butonuna dokunun.</string>
+    <string name="items_empty_filtered_title">Aramaya Uygun Ürün Bulunamadı</string>
+    <string name="items_empty_filtered_description">Arama teriminizi veya kategori filtrenizi temizlemeyi deneyin.</string>
+    <string name="items_action_mark_used">Kullanıldı</string>
+    <string name="items_action_mark_discarded">Atıldı</string>
+    <string name="items_options">Seçenekler</string>
+    <string name="items_clear_search">Aramayı temizle</string>
+
+    <!-- Add & Edit Item Screens -->
+    <string name="add_item_title">Yeni Ürün Ekle</string>
+    <string name="edit_item_title">Ürünü Düzenle</string>
+    <string name="add_item_info">(*) ile işaretlenmiş alanlar doğru takip için zorunludur.</string>
+    <string name="edit_item_info">Ürün detaylarını güncelleyin. Hatırlatıcılar otomatik olarak yeniden hesaplanacaktır.</string>
+    <string name="section_primary_details">Temel Detaylar</string>
+    <string name="section_category_reminder">Kategori ve Hatırlatıcı</string>
+    <string name="label_product_name">Ürün Adı *</string>
+    <string name="placeholder_product_name">örn. Organik Süt, Parasetamol</string>
+    <string name="label_expiration_date">Son Kullanma Tarihi *</string>
+    <string name="placeholder_expiration_date">Tarih seçin</string>
+    <string name="label_category">Kategori *</string>
+    <string name="label_reminder_notice">Hatırlatma Zamanı</string>
+    <string name="label_notes">Notlar (İsteğe Bağlı)</string>
+    <string name="placeholder_notes">Saklama yeri, miktar veya ekstra detaylar ekleyin…</string>
+    <string name="btn_save_item">Ürünü Kaydet</string>
+    <string name="btn_saving_item">Kaydediliyor…</string>
+    <string name="btn_save_changes">Değişiklikleri Kaydet</string>
+    <string name="btn_saving_changes">Değişiklikler Kaydediliyor…</string>
+    <string name="error_name_empty">Lütfen bir ürün adı girin</string>
+    <string name="error_date_empty">Lütfen bir son kullanma tarihi seçin</string>
+    <string name="error_update_failed">Ürün güncellenemedi. Lütfen tekrar deneyin.</string>
+    <string name="error_add_failed">Ürün eklenemedi. Lütfen tekrar deneyin.</string>
+
+    <!-- Reminder Timing Options -->
+    <string name="reminder_same_day">Aynı gün</string>
+    <string name="reminder_1_day_before">1 gün önce</string>
+    <string name="reminder_3_days_before">3 gün önce</string>
+    <string name="reminder_7_days_before">7 gün önce</string>
+    <string name="reminder_days_before">%1$d gün önce</string>
+
+    <!-- Item Detail Screen -->
+    <string name="item_detail_title">Ürün Detayları</string>
+    <string name="item_detail_expiration_reminder">Son Kullanma ve Hatırlatıcı</string>
+    <string name="item_detail_notes">Notlar</string>
+    <string name="item_detail_additional_notes">Ek Notlar</string>
+    <string name="item_detail_not_found_title">Ürün Bulunamadı</string>
+    <string name="item_detail_not_found_desc">Bu ürün silinmiş olabilir veya mevcut değil.</string>
+    <string name="btn_go_back">Geri Dön</string>
+    <string name="dialog_delete_title">Ürün Silinsin mi?</string>
+    <string name="dialog_delete_body">\"%1$s\" ürünü kalıcı olarak silinecektir. Bu işlem geri alınamaz.</string>
+    <string name="btn_delete">Sil</string>
+    <string name="btn_cancel">İptal</string>
+
+    <!-- History Screen -->
+    <string name="history_title">Geçmiş</string>
+    <string name="history_filter_all">Tümü</string>
+    <string name="history_filter_used">Kullanılanlar</string>
+    <string name="history_filter_discarded">Atılanlar</string>
+    <string name="history_empty_all_title">Henüz Geçmiş Yok</string>
+    <string name="history_empty_used_title">Kullanılan Ürün Yok</string>
+    <string name="history_empty_discarded_title">Atılan Ürün Yok</string>
+    <string name="history_empty_desc">\'Kullanıldı\' veya \'Atıldı\' olarak işaretlenen ürünler burada görünecektir. Ürün kullanımını takip etmek gıda israfını azaltmanıza ve alışverişlerinizi optimize etmenize yardımcı olur.</string>
+    <string name="history_category_format">Kategori: %1$s</string>
+    <string name="history_expired_format">Tarihi Doldu: %1$s</string>
+
+    <!-- Settings Screen -->
+    <string name="settings_title">Ayarlar</string>
+    <string name="settings_section_notifications">Bildirimler</string>
+    <string name="settings_reminders_title">Son Kullanma Hatırlatıcıları</string>
+    <string name="settings_reminders_subtitle">Ürünlerin süresi dolmadan önce bildirimler alın</string>
+    <string name="settings_default_reminder_timing">Varsayılan Hatırlatma Zamanı</string>
+    <string name="settings_section_appearance">Görünüm</string>
+    <string name="settings_theme_mode">Tema Modu</string>
+    <string name="settings_dynamic_colors_title">Dinamik Renkler</string>
+    <string name="settings_dynamic_colors_subtitle">Material You dinamik renk paletini kullanın</string>
+    <string name="settings_section_about">Hakkında</string>
+    <string name="settings_version">Sürüm</string>
+    <string name="settings_privacy_policy">Gizlilik Politikası</string>
+    <string name="dialog_select_theme">Tema Seçin</string>
+    <string name="dialog_default_reminder">Varsayılan Hatırlatma Zamanı</string>
+    <string name="btn_close">Kapat</string>
+
+    <!-- Accessibility / Actions -->
+    <string name="action_navigate_back">Geri Dön</string>
+    <string name="action_edit_item">Ürünü Düzenle</string>
+    <string name="action_delete_item">Ürünü Sil</string>
+    <string name="action_select_date">Tarih Seç</string>
+    <string name="action_ok">Tamam</string>
+
+    <!-- Relative Dates -->
+    <string name="relative_expired_yesterday">Dün tarihi doldu</string>
+    <string name="relative_expired_days_ago">%1$d gün önce tarihi doldu</string>
+    <string name="relative_expires_today">Bugün doluyor</string>
+    <string name="relative_expires_tomorrow">Yarın doluyor</string>
+    <string name="relative_expires_in_days">%1$d gün içinde doluyor</string>
+
+    <!-- Notifications -->
+    <string name="notification_channel_name">Son Kullanma Hatırlatıcıları</string>
+    <string name="notification_channel_desc">Son kullanma tarihi yaklaşan ürünler için hatırlatıcılar.</string>
+    <string name="notification_title">ExpiryMate Hatırlatıcısı</string>
+    <string name="notification_body_expired">%1$s ürününün süresi doldu.</string>
+    <string name="notification_body_today">%1$s ürününün süresi bugün doluyor.</string>
+    <string name="notification_body_tomorrow">%1$s ürününün süresi yarın doluyor.</string>
+    <string name="notification_body_days">%1$s ürününün süresi %2$d gün içinde doluyor.</string>
+</resources>

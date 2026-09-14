@@ -30,15 +30,18 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.alperdursun.expirymate.ExpiryMateApplication
+import com.alperdursun.expirymate.R
 import com.alperdursun.expirymate.domain.model.Item
 import com.alperdursun.expirymate.domain.model.ItemStatus
 import com.alperdursun.expirymate.util.DateUtils
+import com.alperdursun.expirymate.util.displayNameResId
 import com.alperdursun.expirymate.util.icon
 
 @Composable
@@ -60,7 +63,7 @@ fun HistoryScreen(
     ) {
         // Screen Title
         Text(
-            text = "History",
+            text = stringResource(R.string.history_title),
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onBackground
@@ -80,9 +83,9 @@ fun HistoryScreen(
                     label = {
                         Text(
                             text = when (filter) {
-                                HistoryFilter.ALL -> "All"
-                                HistoryFilter.USED -> "Used"
-                                HistoryFilter.DISCARDED -> "Discarded"
+                                HistoryFilter.ALL -> stringResource(R.string.history_filter_all)
+                                HistoryFilter.USED -> stringResource(R.string.history_filter_used)
+                                HistoryFilter.DISCARDED -> stringResource(R.string.history_filter_discarded)
                             }
                         )
                     },
@@ -177,7 +180,7 @@ private fun HistoryItemCard(
                 )
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
-                    text = "Category: ${item.category.displayName}",
+                    text = stringResource(R.string.history_category_format, stringResource(item.category.displayNameResId)),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.outline
                 )
@@ -192,7 +195,7 @@ private fun HistoryItemCard(
                     else MaterialTheme.colorScheme.errorContainer
                 ) {
                     Text(
-                        text = if (isUsed) "Used" else "Discarded",
+                        text = stringResource(item.status.displayNameResId),
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.Bold,
                         color = if (isUsed) MaterialTheme.colorScheme.onPrimaryContainer
@@ -202,7 +205,7 @@ private fun HistoryItemCard(
                 }
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = "Expired ${DateUtils.formatDate(item.expirationDate)}",
+                    text = stringResource(R.string.history_expired_format, DateUtils.formatDate(item.expirationDate)),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.outline
                 )
@@ -236,9 +239,9 @@ private fun EmptyHistoryState(
 
             Text(
                 text = when (filter) {
-                    HistoryFilter.ALL -> "No History Yet"
-                    HistoryFilter.USED -> "No Used Items"
-                    HistoryFilter.DISCARDED -> "No Discarded Items"
+                    HistoryFilter.ALL -> stringResource(R.string.history_empty_all_title)
+                    HistoryFilter.USED -> stringResource(R.string.history_empty_used_title)
+                    HistoryFilter.DISCARDED -> stringResource(R.string.history_empty_discarded_title)
                 },
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
@@ -248,7 +251,7 @@ private fun EmptyHistoryState(
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = "Items marked as 'Used' or 'Discarded' will appear here. Tracking product usage helps you reduce food waste and optimize future purchases.",
+                text = stringResource(R.string.history_empty_desc),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.outline,
                 textAlign = TextAlign.Center

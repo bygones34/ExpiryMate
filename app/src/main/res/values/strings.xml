@@ -1,3 +1,157 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">ExpiryMate</string>
+
+    <!-- Bottom Navigation -->
+    <string name="nav_home">Home</string>
+    <string name="nav_items">Items</string>
+    <string name="nav_history">History</string>
+    <string name="nav_settings">Settings</string>
+
+    <!-- Categories -->
+    <string name="category_food">Food</string>
+    <string name="category_medicine">Medicine</string>
+    <string name="category_cosmetics">Cosmetics</string>
+    <string name="category_supplements">Supplements</string>
+    <string name="category_household">Household</string>
+    <string name="category_other">Other</string>
+
+    <!-- Item Statuses -->
+    <string name="status_active">Active</string>
+    <string name="status_used">Used</string>
+    <string name="status_discarded">Discarded</string>
+
+    <!-- Theme Modes -->
+    <string name="theme_system">System Default</string>
+    <string name="theme_light">Light</string>
+    <string name="theme_dark">Dark</string>
+
+    <!-- Home Screen -->
+    <string name="home_overview">Overview</string>
+    <string name="home_expired">Expired</string>
+    <string name="home_this_week">This Week</string>
+    <string name="home_later">Later</string>
+    <string name="home_next_to_expire">Next to Expire</string>
+    <string name="home_expiring_soon">Expiring Soon</string>
+    <string name="home_item_count">%1$d item</string>
+    <string name="home_items_count">%1$d items</string>
+    <string name="home_no_active_products">No active products tracked yet.</string>
+    <string name="home_no_expiring_soon">No items expiring soon.</string>
+    <string name="home_quick_add_description">Keep your pantry and medicine cabinet organized</string>
+    <string name="home_add_product_item">Add Product Item</string>
+
+    <!-- Welcome Dialog -->
+    <string name="welcome_title">Welcome to ExpiryMate 👋</string>
+    <string name="welcome_message">Track expiration dates. Get reminded. Waste less.</string>
+    <string name="welcome_action">Get Started</string>
+
+    <!-- Items Screen -->
+    <string name="items_title">My Items</string>
+    <string name="items_active_count">%1$d items</string>
+    <string name="items_search_placeholder">Search by name or category…</string>
+    <string name="items_filter_all">All</string>
+    <string name="items_empty_title">No Items Tracked Yet</string>
+    <string name="items_empty_description">Tap the \'+\' button to add your first product and start tracking expiration dates.</string>
+    <string name="items_empty_filtered_title">No Matching Items</string>
+    <string name="items_empty_filtered_description">Try clearing your search or category filter.</string>
+    <string name="items_action_mark_used">Mark as Used</string>
+    <string name="items_action_mark_discarded">Mark as Discarded</string>
+    <string name="items_options">Options</string>
+    <string name="items_clear_search">Clear search</string>
+
+    <!-- Add & Edit Item Screens -->
+    <string name="add_item_title">Add New Item</string>
+    <string name="edit_item_title">Edit Item</string>
+    <string name="add_item_info">Fields marked with (*) are required to track expiration accurately.</string>
+    <string name="edit_item_info">Update the details for this item. Expiration reminders will automatically be recalculated.</string>
+    <string name="section_primary_details">Primary Details</string>
+    <string name="section_category_reminder">Category &amp; Reminder</string>
+    <string name="label_product_name">Product Name *</string>
+    <string name="placeholder_product_name">e.g. Fresh Organic Milk, Paracetamol</string>
+    <string name="label_expiration_date">Expiration Date *</string>
+    <string name="placeholder_expiration_date">Select date</string>
+    <string name="label_category">Category *</string>
+    <string name="label_reminder_notice">Reminder Notice</string>
+    <string name="label_notes">Notes (Optional)</string>
+    <string name="placeholder_notes">Add storage location, quantity, or extra details…</string>
+    <string name="btn_save_item">Save Item</string>
+    <string name="btn_saving_item">Saving…</string>
+    <string name="btn_save_changes">Save Changes</string>
+    <string name="btn_saving_changes">Saving Changes…</string>
+    <string name="error_name_empty">Please enter a product name</string>
+    <string name="error_date_empty">Please select an expiration date</string>
+    <string name="error_update_failed">Failed to update item. Please try again.</string>
+    <string name="error_add_failed">Failed to add item. Please try again.</string>
+
+    <!-- Reminder Timing Options -->
+    <string name="reminder_same_day">Same day</string>
+    <string name="reminder_1_day_before">1 day before</string>
+    <string name="reminder_3_days_before">3 days before</string>
+    <string name="reminder_7_days_before">7 days before</string>
+    <string name="reminder_days_before">%1$d days before</string>
+
+    <!-- Item Detail Screen -->
+    <string name="item_detail_title">Item Details</string>
+    <string name="item_detail_expiration_reminder">Expiration &amp; Reminder</string>
+    <string name="item_detail_notes">Notes</string>
+    <string name="item_detail_additional_notes">Additional Notes</string>
+    <string name="item_detail_not_found_title">Item Not Found</string>
+    <string name="item_detail_not_found_desc">This item may have been deleted or no longer exists.</string>
+    <string name="btn_go_back">Go Back</string>
+    <string name="dialog_delete_title">Delete Item?</string>
+    <string name="dialog_delete_body">This will permanently remove \"%1$s\". This action cannot be undone.</string>
+    <string name="btn_delete">Delete</string>
+    <string name="btn_cancel">Cancel</string>
+
+    <!-- History Screen -->
+    <string name="history_title">History</string>
+    <string name="history_filter_all">All</string>
+    <string name="history_filter_used">Used</string>
+    <string name="history_filter_discarded">Discarded</string>
+    <string name="history_empty_all_title">No History Yet</string>
+    <string name="history_empty_used_title">No Used Items</string>
+    <string name="history_empty_discarded_title">No Discarded Items</string>
+    <string name="history_empty_desc">Items marked as \'Used\' or \'Discarded\' will appear here. Tracking product usage helps you reduce food waste and optimize future purchases.</string>
+    <string name="history_category_format">Category: %1$s</string>
+    <string name="history_expired_format">Expired %1$s</string>
+
+    <!-- Settings Screen -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_section_notifications">Notifications</string>
+    <string name="settings_reminders_title">Expiration Reminders</string>
+    <string name="settings_reminders_subtitle">Receive notifications before products expire</string>
+    <string name="settings_default_reminder_timing">Default Reminder Timing</string>
+    <string name="settings_section_appearance">Appearance</string>
+    <string name="settings_theme_mode">Theme Mode</string>
+    <string name="settings_dynamic_colors_title">Dynamic Colors</string>
+    <string name="settings_dynamic_colors_subtitle">Use Material You dynamic color palette</string>
+    <string name="settings_section_about">About</string>
+    <string name="settings_version">Version</string>
+    <string name="settings_privacy_policy">Privacy Policy</string>
+    <string name="dialog_select_theme">Select Theme</string>
+    <string name="dialog_default_reminder">Default Reminder Timing</string>
+    <string name="btn_close">Close</string>
+
+    <!-- Accessibility / Actions -->
+    <string name="action_navigate_back">Navigate Back</string>
+    <string name="action_edit_item">Edit Item</string>
+    <string name="action_delete_item">Delete Item</string>
+    <string name="action_select_date">Select Date</string>
+    <string name="action_ok">OK</string>
+
+    <!-- Relative Dates -->
+    <string name="relative_expired_yesterday">Expired yesterday</string>
+    <string name="relative_expired_days_ago">Expired %1$d days ago</string>
+    <string name="relative_expires_today">Expires today</string>
+    <string name="relative_expires_tomorrow">Expires tomorrow</string>
+    <string name="relative_expires_in_days">Expires in %1$d days</string>
+
+    <!-- Notifications -->
+    <string name="notification_channel_name">Expiration Reminders</string>
+    <string name="notification_channel_desc">Reminders for products approaching their expiration date.</string>
+    <string name="notification_title">ExpiryMate Reminder</string>
+    <string name="notification_body_expired">%1$s has expired.</string>
+    <string name="notification_body_today">%1$s expires today.</string>
+    <string name="notification_body_tomorrow">%1$s expires tomorrow.</string>
+    <string name="notification_body_days">%1$s expires in %2$d days.</string>
 </resources>

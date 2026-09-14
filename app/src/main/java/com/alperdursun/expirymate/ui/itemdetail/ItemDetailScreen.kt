@@ -52,14 +52,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.alperdursun.expirymate.ExpiryMateApplication
+import com.alperdursun.expirymate.R
 import com.alperdursun.expirymate.domain.model.Item
 import com.alperdursun.expirymate.domain.model.ItemStatus
 import com.alperdursun.expirymate.util.DateUtils
+import com.alperdursun.expirymate.util.displayNameResId
 import com.alperdursun.expirymate.util.icon
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -89,7 +92,7 @@ fun ItemDetailScreen(
             CenterAlignedTopAppBar(
                 title = {
                     Text(
-                        text = "Item Details",
+                        text = stringResource(R.string.item_detail_title),
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold
                     )
@@ -98,7 +101,7 @@ fun ItemDetailScreen(
                     IconButton(onClick = onNavigateBack) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Navigate Back"
+                            contentDescription = stringResource(R.string.action_navigate_back)
                         )
                     }
                 },
@@ -108,14 +111,14 @@ fun ItemDetailScreen(
                             IconButton(onClick = { onEditItem(itemId) }) {
                                 Icon(
                                     imageVector = Icons.Default.Edit,
-                                    contentDescription = "Edit Item"
+                                    contentDescription = stringResource(R.string.action_edit_item)
                                 )
                             }
                         }
                         IconButton(onClick = { showDeleteDialog = true }) {
                             Icon(
                                 imageVector = Icons.Default.Delete,
-                                contentDescription = "Delete Item",
+                                contentDescription = stringResource(R.string.action_delete_item),
                                 tint = MaterialTheme.colorScheme.error
                             )
                         }
@@ -163,8 +166,8 @@ fun ItemDetailScreen(
                     tint = MaterialTheme.colorScheme.error
                 )
             },
-            title = { Text("Delete Item?") },
-            text = { Text("This will permanently remove \"${item.name}\". This action cannot be undone.") },
+            title = { Text(stringResource(R.string.dialog_delete_title)) },
+            text = { Text(stringResource(R.string.dialog_delete_body, item.name)) },
             confirmButton = {
                 TextButton(
                     onClick = {
@@ -172,12 +175,12 @@ fun ItemDetailScreen(
                         viewModel.deleteItem(onDeleted = onNavigateBack)
                     }
                 ) {
-                    Text("Delete", color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.btn_delete), color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showDeleteDialog = false }) {
-                    Text("Cancel")
+                    Text(stringResource(R.string.btn_cancel))
                 }
             }
         )
@@ -190,6 +193,7 @@ private fun ItemDetailContent(
     onMarkAsUsed: () -> Unit,
     onMarkAsDiscarded: () -> Unit
 ) {
+    val context = LocalContext.current
     val isExpired = DateUtils.isExpired(item.expirationDate)
 
     Column(
@@ -241,7 +245,7 @@ private fun ItemDetailContent(
                                 color = MaterialTheme.colorScheme.secondaryContainer
                             ) {
                                 Text(
-                                    text = item.category.displayName,
+                                    text = stringResource(item.category.displayNameResId),
                                     style = MaterialTheme.typography.labelMedium,
                                     color = MaterialTheme.colorScheme.onSecondaryContainer,
                                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
@@ -255,29 +259,32 @@ private fun ItemDetailContent(
         }
 
         // Expiration & Reminder Card
-        DetailSectionCard(title = "Expiration & Reminder") {
+        DetailSectionCard(title = stringResource(R.string.item_detail_expiration_reminder)) {
             DetailInfoRow(
                 icon = Icons.Default.CalendarMonth,
-                label = "Expiration Date",
-                value = "${DateUtils.formatDate(item.expirationDate)} (${DateUtils.getRelativeExpiryText(item.expirationDate)})"
+                label = stringResource(R.string.label_expiration_date),
+                value = "${DateUtils.formatDate(item.expirationDate)} (${DateUtils.getRelativeExpiryText(context, item.expirationDate)})"
             )
+            val reminderNoticeText = when (item.reminderDaysBefore) {
+                0 -> stringResource(R.string.reminder_same_day)
+                1 -> stringResource(R.string.reminder_1_day_before)
+                3 -> stringResource(R.string.reminder_3_days_before)
+                7 -> stringResource(R.string.reminder_7_days_before)
+                else -> stringResource(R.string.reminder_days_before, item.reminderDaysBefore)
+            }
             DetailInfoRow(
                 icon = Icons.Default.Notifications,
-                label = "Reminder Notice",
-                value = when (item.reminderDaysBefore) {
-                    0 -> "Same day"
-                    1 -> "1 day before"
-                    else -> "${item.reminderDaysBefore} days before"
-                }
+                label = stringResource(R.string.label_reminder_notice),
+                value = reminderNoticeText
             )
         }
 
         // Notes Card (if present)
         if (!item.notes.isNullOrEmpty()) {
-            DetailSectionCard(title = "Notes") {
+            DetailSectionCard(title = stringResource(R.string.item_detail_notes)) {
                 DetailInfoRow(
                     icon = Icons.AutoMirrored.Filled.Notes,
-                    label = "Additional Notes",
+                    label = stringResource(R.string.item_detail_additional_notes),
                     value = item.notes
                 )
             }
@@ -298,7 +305,7 @@ private fun ItemDetailContent(
                 ) {
                     Icon(imageVector = Icons.Default.Check, contentDescription = null, modifier = Modifier.size(18.dp))
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text("Mark as Used")
+                    Text(stringResource(R.string.items_action_mark_used))
                 }
                 OutlinedButton(
                     onClick = onMarkAsDiscarded,
@@ -310,7 +317,7 @@ private fun ItemDetailContent(
                 ) {
                     Icon(imageVector = Icons.Default.DeleteOutline, contentDescription = null, modifier = Modifier.size(18.dp))
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text("Discarded")
+                    Text(stringResource(R.string.items_action_mark_discarded))
                 }
             }
         }
@@ -319,17 +326,17 @@ private fun ItemDetailContent(
 
 @Composable
 private fun StatusBadge(status: ItemStatus) {
-    val (text, containerColor, contentColor) = when (status) {
-        ItemStatus.ACTIVE -> Triple("Active", MaterialTheme.colorScheme.primaryContainer, MaterialTheme.colorScheme.onPrimaryContainer)
-        ItemStatus.USED -> Triple("Used", MaterialTheme.colorScheme.tertiaryContainer, MaterialTheme.colorScheme.onTertiaryContainer)
-        ItemStatus.DISCARDED -> Triple("Discarded", MaterialTheme.colorScheme.errorContainer, MaterialTheme.colorScheme.onErrorContainer)
+    val (containerColor, contentColor) = when (status) {
+        ItemStatus.ACTIVE -> Pair(MaterialTheme.colorScheme.primaryContainer, MaterialTheme.colorScheme.onPrimaryContainer)
+        ItemStatus.USED -> Pair(MaterialTheme.colorScheme.tertiaryContainer, MaterialTheme.colorScheme.onTertiaryContainer)
+        ItemStatus.DISCARDED -> Pair(MaterialTheme.colorScheme.errorContainer, MaterialTheme.colorScheme.onErrorContainer)
     }
     Surface(
         shape = RoundedCornerShape(8.dp),
         color = containerColor
     ) {
         Text(
-            text = text,
+            text = stringResource(status.displayNameResId),
             style = MaterialTheme.typography.labelMedium,
             fontWeight = FontWeight.Bold,
             color = contentColor,
@@ -413,19 +420,19 @@ private fun ItemNotFoundState(onNavigateBack: () -> Unit) {
             )
             Spacer(modifier = Modifier.height(16.dp))
             Text(
-                text = "Item Not Found",
+                text = stringResource(R.string.item_detail_not_found_title),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = "This item may have been deleted or no longer exists.",
+                text = stringResource(R.string.item_detail_not_found_desc),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.outline
             )
             Spacer(modifier = Modifier.height(16.dp))
             Button(onClick = onNavigateBack) {
-                Text("Go Back")
+                Text(stringResource(R.string.btn_go_back))
             }
         }
     }

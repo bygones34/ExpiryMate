@@ -49,14 +49,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.alperdursun.expirymate.ExpiryMateApplication
+import com.alperdursun.expirymate.R
 import com.alperdursun.expirymate.domain.model.Item
 import com.alperdursun.expirymate.domain.model.ItemCategory
 import com.alperdursun.expirymate.util.DateUtils
+import com.alperdursun.expirymate.util.displayNameResId
 import com.alperdursun.expirymate.util.icon
 
 @Composable
@@ -89,7 +92,7 @@ fun ItemsScreen(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "My Items",
+                text = stringResource(R.string.items_title),
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onBackground
@@ -99,7 +102,7 @@ fun ItemsScreen(
                 color = MaterialTheme.colorScheme.primaryContainer
             ) {
                 Text(
-                    text = "${uiState.totalActiveCount} items",
+                    text = stringResource(R.string.items_active_count, uiState.totalActiveCount),
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onPrimaryContainer,
@@ -115,7 +118,7 @@ fun ItemsScreen(
             value = uiState.searchQuery,
             onValueChange = viewModel::onSearchQueryChanged,
             modifier = Modifier.fillMaxWidth(),
-            placeholder = { Text("Search by name or category...") },
+            placeholder = { Text(stringResource(R.string.items_search_placeholder)) },
             leadingIcon = {
                 Icon(
                     imageVector = Icons.Default.Search,
@@ -128,7 +131,7 @@ fun ItemsScreen(
                     IconButton(onClick = { viewModel.onSearchQueryChanged("") }) {
                         Icon(
                             imageVector = Icons.Default.Clear,
-                            contentDescription = "Clear search"
+                            contentDescription = stringResource(R.string.items_clear_search)
                         )
                     }
                 }
@@ -154,7 +157,7 @@ fun ItemsScreen(
             FilterChip(
                 selected = isAllSelected,
                 onClick = { viewModel.onCategorySelected(null) },
-                label = { Text("All") },
+                label = { Text(stringResource(R.string.items_filter_all)) },
                 leadingIcon = {
                     Icon(
                         imageVector = Icons.Default.FilterList,
@@ -174,7 +177,7 @@ fun ItemsScreen(
                 FilterChip(
                     selected = isSelected,
                     onClick = { viewModel.onCategorySelected(category) },
-                    label = { Text(category.displayName) },
+                    label = { Text(stringResource(category.displayNameResId)) },
                     colors = FilterChipDefaults.filterChipColors(
                         selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
                         selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer
@@ -223,6 +226,7 @@ private fun ItemCard(
     onMarkAsUsed: () -> Unit,
     onMarkAsDiscarded: () -> Unit
 ) {
+    val context = LocalContext.current
     var showMenu by remember { mutableStateOf(false) }
     val isExpired = DateUtils.isExpired(item.expirationDate)
 
@@ -282,7 +286,7 @@ private fun ItemCard(
                         color = MaterialTheme.colorScheme.surfaceVariant
                     ) {
                         Text(
-                            text = item.category.displayName,
+                            text = stringResource(item.category.displayNameResId),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
@@ -305,7 +309,7 @@ private fun ItemCard(
                 horizontalAlignment = Alignment.End
             ) {
                 Text(
-                    text = DateUtils.getRelativeExpiryText(item.expirationDate),
+                    text = DateUtils.getRelativeExpiryText(context, item.expirationDate),
                     style = MaterialTheme.typography.labelSmall,
                     fontWeight = FontWeight.Bold,
                     color = if (isExpired) MaterialTheme.colorScheme.error
@@ -323,7 +327,7 @@ private fun ItemCard(
                 IconButton(onClick = { showMenu = true }) {
                     Icon(
                         imageVector = Icons.Default.MoreVert,
-                        contentDescription = "Options"
+                        contentDescription = stringResource(R.string.items_options)
                     )
                 }
                 DropdownMenu(
@@ -331,7 +335,7 @@ private fun ItemCard(
                     onDismissRequest = { showMenu = false }
                 ) {
                     DropdownMenuItem(
-                        text = { Text("Mark as Used") },
+                        text = { Text(stringResource(R.string.items_action_mark_used)) },
                         onClick = {
                             showMenu = false
                             onMarkAsUsed()
@@ -345,7 +349,7 @@ private fun ItemCard(
                         }
                     )
                     DropdownMenuItem(
-                        text = { Text("Mark as Discarded") },
+                        text = { Text(stringResource(R.string.items_action_mark_discarded)) },
                         onClick = {
                             showMenu = false
                             onMarkAsDiscarded()
@@ -385,15 +389,14 @@ private fun EmptyItemsState(
             )
             Spacer(modifier = Modifier.height(16.dp))
             Text(
-                text = if (isFiltered) "No Matching Items" else "No Items Tracked Yet",
+                text = if (isFiltered) stringResource(R.string.items_empty_filtered_title) else stringResource(R.string.items_empty_title),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onBackground
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = if (isFiltered) "Try clearing your search or category filter."
-                else "Tap the '+' button to add your first product and start tracking expiration dates.",
+                text = if (isFiltered) stringResource(R.string.items_empty_filtered_description) else stringResource(R.string.items_empty_description),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.outline
             )

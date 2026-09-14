@@ -39,14 +39,17 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.alperdursun.expirymate.ExpiryMateApplication
+import com.alperdursun.expirymate.R
 import com.alperdursun.expirymate.domain.model.Item
 import com.alperdursun.expirymate.util.DateUtils
+import com.alperdursun.expirymate.util.displayNameResId
 import com.alperdursun.expirymate.util.icon
 
 @Composable
@@ -97,20 +100,20 @@ fun HomeScreen(
             onDismissRequest = {},
             title = {
                 Text(
-                    text = "Welcome to ExpiryMate 👋",
+                    text = stringResource(R.string.welcome_title),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold
                 )
             },
             text = {
                 Text(
-                    text = "Track expiration dates. Get reminded. Waste less.",
+                    text = stringResource(R.string.welcome_message),
                     style = MaterialTheme.typography.bodyMedium
                 )
             },
             confirmButton = {
                 Button(onClick = viewModel::onWelcomeDismissed) {
-                    Text("Get Started")
+                    Text(stringResource(R.string.welcome_action))
                 }
             }
         )
@@ -125,7 +128,7 @@ private fun ExpirationSummarySection(
 ) {
     Column {
         Text(
-            text = "Overview",
+            text = stringResource(R.string.home_overview),
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.onBackground
@@ -136,7 +139,7 @@ private fun ExpirationSummarySection(
             horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             SummaryCard(
-                title = "Expired",
+                title = stringResource(R.string.home_expired),
                 count = expiredCount.toString(),
                 icon = Icons.Default.ErrorOutline,
                 containerColor = MaterialTheme.colorScheme.errorContainer,
@@ -144,7 +147,7 @@ private fun ExpirationSummarySection(
                 modifier = Modifier.weight(1f)
             )
             SummaryCard(
-                title = "This Week",
+                title = stringResource(R.string.home_this_week),
                 count = thisWeekCount.toString(),
                 icon = Icons.Default.Alarm,
                 containerColor = MaterialTheme.colorScheme.tertiaryContainer,
@@ -152,7 +155,7 @@ private fun ExpirationSummarySection(
                 modifier = Modifier.weight(1f)
             )
             SummaryCard(
-                title = "Later",
+                title = stringResource(R.string.home_later),
                 count = laterCount.toString(),
                 icon = Icons.Default.Schedule,
                 containerColor = MaterialTheme.colorScheme.secondaryContainer,
@@ -210,9 +213,11 @@ private fun NextToExpireSection(
     nextItem: Item?,
     onItemClick: (Long) -> Unit
 ) {
+    val context = LocalContext.current
+
     Column {
         Text(
-            text = "Next to Expire",
+            text = stringResource(R.string.home_next_to_expire),
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.onBackground
@@ -228,7 +233,7 @@ private fun NextToExpireSection(
                 )
             ) {
                 Text(
-                    text = "No active products tracked yet.",
+                    text = stringResource(R.string.home_no_active_products),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.outline,
                     modifier = Modifier.padding(16.dp)
@@ -281,7 +286,7 @@ private fun NextToExpireSection(
                         )
                         Spacer(modifier = Modifier.height(2.dp))
                         Text(
-                            text = "Category: ${nextItem.category.displayName}",
+                            text = stringResource(R.string.history_category_format, stringResource(nextItem.category.displayNameResId)),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                         )
@@ -292,7 +297,7 @@ private fun NextToExpireSection(
                         else MaterialTheme.colorScheme.tertiaryContainer
                     ) {
                         Text(
-                            text = DateUtils.getRelativeExpiryText(nextItem.expirationDate),
+                            text = DateUtils.getRelativeExpiryText(context, nextItem.expirationDate),
                             style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.Bold,
                             color = if (isExpired) MaterialTheme.colorScheme.onErrorContainer
@@ -318,14 +323,19 @@ private fun ExpiringSoonSection(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "Expiring Soon",
+                text = stringResource(R.string.home_expiring_soon),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.onBackground
             )
             if (items.isNotEmpty()) {
+                val countText = if (items.size == 1) {
+                    stringResource(R.string.home_item_count, items.size)
+                } else {
+                    stringResource(R.string.home_items_count, items.size)
+                }
                 Text(
-                    text = "${items.size} item${if (items.size > 1) "s" else ""}",
+                    text = countText,
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.outline
                 )
@@ -340,7 +350,7 @@ private fun ExpiringSoonSection(
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
             ) {
                 Text(
-                    text = "No items expiring soon.",
+                    text = stringResource(R.string.home_no_expiring_soon),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.outline,
                     modifier = Modifier.padding(14.dp)
@@ -366,6 +376,7 @@ private fun ItemSummaryCard(
     item: Item,
     onClick: () -> Unit
 ) {
+    val context = LocalContext.current
     val isExpired = DateUtils.isExpired(item.expirationDate)
     val urgencyColor = when {
         isExpired -> MaterialTheme.colorScheme.error
@@ -406,13 +417,13 @@ private fun ItemSummaryCard(
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
-                    text = item.category.displayName,
+                    text = stringResource(item.category.displayNameResId),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                 )
             }
             Text(
-                text = DateUtils.getRelativeExpiryText(item.expirationDate),
+                text = DateUtils.getRelativeExpiryText(context, item.expirationDate),
                 style = MaterialTheme.typography.bodySmall,
                 color = if (isExpired) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
                 fontSize = 12.sp,
@@ -447,7 +458,7 @@ private fun QuickAddCard(
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = "Keep your pantry and medicine cabinet organized",
+                text = stringResource(R.string.home_quick_add_description),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -462,7 +473,7 @@ private fun QuickAddCard(
                     modifier = Modifier.size(18.dp)
                 )
                 Spacer(modifier = Modifier.width(6.dp))
-                Text(text = "Add Product Item")
+                Text(text = stringResource(R.string.home_add_product_item))
             }
         }
     }

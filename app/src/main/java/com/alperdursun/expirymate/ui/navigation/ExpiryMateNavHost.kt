@@ -22,6 +22,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -82,13 +83,13 @@ fun ExpiryMateApp(
                                 icon?.let {
                                     Icon(
                                         imageVector = it,
-                                        contentDescription = screen.title
+                                        contentDescription = stringResource(screen.titleResId)
                                     )
                                 }
                             },
                             label = {
                                 Text(
-                                    text = screen.title,
+                                    text = stringResource(screen.titleResId),
                                     fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
                                 )
                             },

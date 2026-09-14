@@ -17,17 +17,18 @@ import java.time.temporal.ChronoUnit
 object NotificationHelper {
 
     const val CHANNEL_ID = "expiration_reminders"
-    const val CHANNEL_NAME = "Expiration Reminders"
-    const val CHANNEL_DESCRIPTION = "Reminders for products approaching their expiration date."
 
     fun createNotificationChannel(context: Context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channelName = context.getString(R.string.notification_channel_name)
+            val channelDesc = context.getString(R.string.notification_channel_desc)
+
             val channel = NotificationChannel(
                 CHANNEL_ID,
-                CHANNEL_NAME,
+                channelName,
                 NotificationManager.IMPORTANCE_HIGH,
             ).apply {
-                description = CHANNEL_DESCRIPTION
+                description = channelDesc
             }
             val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             notificationManager.createNotificationChannel(channel)
@@ -48,15 +49,17 @@ object NotificationHelper {
 
         val days = ChronoUnit.DAYS.between(LocalDate.now(), item.expirationDate)
         val bodyText = when {
-            days < 0 -> "${item.name} has expired."
-            days == 0L -> "${item.name} expires today."
-            days == 1L -> "${item.name} expires tomorrow."
-            else -> "${item.name} expires in $days days."
+            days < 0 -> context.getString(R.string.notification_body_expired, item.name)
+            days == 0L -> context.getString(R.string.notification_body_today, item.name)
+            days == 1L -> context.getString(R.string.notification_body_tomorrow, item.name)
+            else -> context.getString(R.string.notification_body_days, item.name, days)
         }
+
+        val notificationTitle = context.getString(R.string.notification_title)
 
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_notification)
-            .setContentTitle("ExpiryMate Reminder")
+            .setContentTitle(notificationTitle)
             .setContentText(bodyText)
             .setStyle(NotificationCompat.BigTextStyle().bigText(bodyText))
             .setPriority(NotificationCompat.PRIORITY_HIGH)

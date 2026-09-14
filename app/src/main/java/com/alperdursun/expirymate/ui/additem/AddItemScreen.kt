@@ -61,6 +61,7 @@ import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
@@ -68,21 +69,18 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.alperdursun.expirymate.ExpiryMateApplication
+import com.alperdursun.expirymate.R
 import com.alperdursun.expirymate.domain.model.Item
 import com.alperdursun.expirymate.domain.model.ItemCategory
 import com.alperdursun.expirymate.util.DateUtils
+import com.alperdursun.expirymate.util.displayNameResId
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.first
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
 
-private val reminderOptions = listOf(
-    0 to "Same day",
-    1 to "1 day before",
-    3 to "3 days before",
-    7 to "7 days before",
-)
+private val reminderOptionDays = listOf(0, 1, 3, 7)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -146,7 +144,7 @@ fun AddItemScreen(
             CenterAlignedTopAppBar(
                 title = {
                     Text(
-                        text = "Add New Item",
+                        text = stringResource(R.string.add_item_title),
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold
                     )
@@ -158,7 +156,7 @@ fun AddItemScreen(
                     }) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Navigate Back"
+                            contentDescription = stringResource(R.string.action_navigate_back)
                         )
                     }
                 },
@@ -195,7 +193,7 @@ fun AddItemScreen(
                     )
                     Spacer(modifier = Modifier.width(10.dp))
                     Text(
-                        text = "Fields marked with (*) are required to track expiration accurately.",
+                        text = stringResource(R.string.add_item_info),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onPrimaryContainer
                     )
@@ -216,7 +214,7 @@ fun AddItemScreen(
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     Text(
-                        text = "Primary Details",
+                        text = stringResource(R.string.section_primary_details),
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.primary
@@ -228,11 +226,11 @@ fun AddItemScreen(
                         onValueChange = viewModel::onNameChanged,
                         label = {
                             Text(
-                                text = "Product Name *",
+                                text = stringResource(R.string.label_product_name),
                                 fontWeight = FontWeight.Bold
                             )
                         },
-                        placeholder = { Text("e.g. Fresh Organic Milk, Paracetamol") },
+                        placeholder = { Text(stringResource(R.string.placeholder_product_name)) },
                         isError = formState.nameError != null,
                         supportingText = formState.nameError?.let { { Text(it) } },
                         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
@@ -252,11 +250,11 @@ fun AddItemScreen(
                             readOnly = true,
                             label = {
                                 Text(
-                                    text = "Expiration Date *",
+                                    text = stringResource(R.string.label_expiration_date),
                                     fontWeight = FontWeight.Bold
                                 )
                             },
-                            placeholder = { Text("Select date") },
+                            placeholder = { Text(stringResource(R.string.placeholder_expiration_date)) },
                             isError = formState.dateError != null,
                             supportingText = formState.dateError?.let { { Text(it) } },
                             trailingIcon = {
@@ -266,7 +264,7 @@ fun AddItemScreen(
                                 }) {
                                     Icon(
                                         imageVector = Icons.Default.CalendarMonth,
-                                        contentDescription = "Select Date"
+                                        contentDescription = stringResource(R.string.action_select_date)
                                     )
                                 }
                             },
@@ -300,7 +298,7 @@ fun AddItemScreen(
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     Text(
-                        text = "Category & Reminder",
+                        text = stringResource(R.string.section_category_reminder),
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.secondary
@@ -317,7 +315,7 @@ fun AddItemScreen(
                             )
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
-                                text = "Category *",
+                                text = stringResource(R.string.label_category),
                                 style = MaterialTheme.typography.labelMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -336,7 +334,7 @@ fun AddItemScreen(
                                         focusManager.clearFocus()
                                         viewModel.onCategorySelected(category)
                                     },
-                                    label = { Text(category.displayName) },
+                                    label = { Text(stringResource(category.displayNameResId)) },
                                     shape = RoundedCornerShape(10.dp),
                                     colors = FilterChipDefaults.filterChipColors(
                                         selectedContainerColor = MaterialTheme.colorScheme.secondaryContainer,
@@ -358,7 +356,7 @@ fun AddItemScreen(
                             )
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
-                                text = "Reminder Notice",
+                                text = stringResource(R.string.label_reminder_notice),
                                 style = MaterialTheme.typography.labelMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -370,14 +368,21 @@ fun AddItemScreen(
                                 .horizontalScroll(rememberScrollState()),
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            reminderOptions.forEach { (days, label) ->
+                            reminderOptionDays.forEach { days ->
+                                val labelText = when (days) {
+                                    0 -> stringResource(R.string.reminder_same_day)
+                                    1 -> stringResource(R.string.reminder_1_day_before)
+                                    3 -> stringResource(R.string.reminder_3_days_before)
+                                    7 -> stringResource(R.string.reminder_7_days_before)
+                                    else -> stringResource(R.string.reminder_days_before, days)
+                                }
                                 FilterChip(
                                     selected = days == formState.reminderDaysBefore,
                                     onClick = {
                                         focusManager.clearFocus()
                                         viewModel.onReminderDaysSelected(days)
                                     },
-                                    label = { Text(label) },
+                                    label = { Text(labelText) },
                                     shape = RoundedCornerShape(10.dp)
                                 )
                             }
@@ -388,8 +393,8 @@ fun AddItemScreen(
                     OutlinedTextField(
                         value = formState.notes,
                         onValueChange = viewModel::onNotesChanged,
-                        label = { Text("Notes (Optional)") },
-                        placeholder = { Text("Add storage location, quantity, or extra details...") },
+                        label = { Text(stringResource(R.string.label_notes)) },
+                        placeholder = { Text(stringResource(R.string.placeholder_notes)) },
                         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
                         keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
                         modifier = Modifier.fillMaxWidth(),
@@ -419,7 +424,7 @@ fun AddItemScreen(
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = if (formState.isSaving) "Saving..." else "Save Item",
+                    text = if (formState.isSaving) stringResource(R.string.btn_saving_item) else stringResource(R.string.btn_save_item),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )
@@ -459,12 +464,12 @@ fun AddItemScreen(
                         showDatePickerDialog = false
                     }
                 ) {
-                    Text("OK")
+                    Text(stringResource(R.string.action_ok))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showDatePickerDialog = false }) {
-                    Text("Cancel")
+                    Text(stringResource(R.string.btn_cancel))
                 }
             }
         ) {

@@ -5,10 +5,34 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.time.LocalDate
+import java.util.Locale
 
 class DateUtilsTest {
 
     private val today = LocalDate.of(2026, 1, 15)
+
+    @Test
+    fun testSupportedLocaleFallback() {
+        val turkishLocale = Locale.forLanguageTag("tr-TR")
+        val frenchLocale = Locale.FRENCH
+
+        assertEquals(Locale.forLanguageTag("tr-TR"), DateUtils.getSupportedLocale(turkishLocale))
+        assertEquals(Locale.US, DateUtils.getSupportedLocale(Locale.ENGLISH))
+        assertEquals(Locale.US, DateUtils.getSupportedLocale(frenchLocale))
+    }
+
+    @Test
+    fun testFormatDateLocaleAware() {
+        val testDate = LocalDate.of(2026, 3, 20)
+
+        val turkishFormatted = DateUtils.formatDate(testDate, Locale.forLanguageTag("tr-TR"))
+        val englishFormatted = DateUtils.formatDate(testDate, Locale.US)
+        val frenchFormatted = DateUtils.formatDate(testDate, Locale.FRENCH)
+
+        assertEquals("20 Mar 2026", turkishFormatted)
+        assertEquals("Mar 20, 2026", englishFormatted)
+        assertEquals("Mar 20, 2026", frenchFormatted) // Falls back to English
+    }
 
     @Test
     fun testExpiredDate() {
